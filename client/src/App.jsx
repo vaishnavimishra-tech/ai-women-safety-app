@@ -1,120 +1,86 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Contacts from './pages/Contacts';
-import Location from './pages/Location';
-import Logs from './pages/Logs';
-import Auth from './pages/Auth';
-import soundAlert from './utils/audioAlert';
-import {
-  getContacts,
-  fetchLocationLogs,
-  getUserProfile,
-  recordLocationLog,
-} from './services/api';
+import React from 'react';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import { SecurityProvider, useSecurity } from './context/SecurityContext';
+import ParticleBackground from './components/3d/ParticleBackground';
+import HudHeader from './components/layout/HudHeader';
+import TacticalDock from './components/layout/TacticalDock';
+import StealthCalculator from './components/layout/StealthCalculator';
+import FakeCallModal from './components/toolkit/FakeCallModal';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('home');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [contacts, setContacts] = useState([]);
-  const [logs, setLogs] = useState([]);
-  const [currentLocation, setCurrentLocation] = useState({
-    lat: 28.6139,
-    lng: 77.2090,
-    accuracy: 10,
-    speed: 0,
-    altitude: 216,
-    address: 'Connaught Place, New Delhi, India',
-  });
+import LandingHeroPage from './pages/LandingHeroPage';
+import PanicHubPage from './pages/PanicHubPage';
+import RadarMapPage from './pages/RadarMapPage';
+import GuardianNetworkPage from './pages/GuardianNetworkPage';
+import VoiceCommandPage from './pages/VoiceCommandPage';
+import IncidentLogsPage from './pages/IncidentLogsPage';
+import SafetyToolkitPage from './pages/SafetyToolkitPage';
+import SettingsPage from './pages/SettingsPage';
 
-  const [isSirenPlaying, setIsSirenPlaying] = useState(false);
-  const [isVoiceListening, setIsVoiceListening] = useState(false);
-  const [speechTranscript, setSpeechTranscript] = useState('');
-  const recognitionRef = useRef(null);
+function MainApp() {
+  const { activeTab, stealthMode, armedState } = useSecurity();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [profileData, contactsData, logsData] = await Promise.all([
-          getUserProfile(),
-          getContacts(),
-          fetchLocationLogs(),
-        ]);
-        setCurrentUser(profileData);
-        setContacts(contactsData);
-        setLogs(logsData);
-      } catch (err) {
-        console.error('Error loading initial data:', err);
-      }
-    }
-    loadData();
-  }, []);
+  if (stealthMode) {
+    return <StealthCalculator />;
+  }
 
-  const toggleVoice = () => {
-    setIsVoiceListening((prev) => !prev);
-  };
-
-  const toggleSiren = () => {
-    if (isSirenPlaying) {
-      soundAlert.stopEmergencySiren();
-      setIsSirenPlaying(false);
-    } else {
-      soundAlert.startEmergencySiren();
-      setIsSirenPlaying(true);
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'hero':
+        return <LandingHeroPage />;
+      case 'sos':
+        return <PanicHubPage />;
+      case 'radar':
+        return <RadarMapPage />;
+      case 'network':
+        return <GuardianNetworkPage />;
+      case 'voice':
+        return <VoiceCommandPage />;
+      case 'toolkit':
+        return <SafetyToolkitPage />;
+      case 'logs':
+        return <IncidentLogsPage />;
+      case 'settings':
+        return <SettingsPage />;
+      default:
+        return <LandingHeroPage />;
     }
   };
 
-  const handleSosDispatched = (newIncident) => {
-    setLogs((prev) => [newIncident, ...prev]);
-  };
-
-  const refreshLocation = () => Promise.resolve(currentLocation);
+  const isArmed = armedState === 'ARMED';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-rose-500 selection:text-white">
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        contactsCount={contacts.length}
-        logsCount={logs.length}
-        isVoiceListening={isVoiceListening}
-        isSirenPlaying={isSirenPlaying}
-        toggleSiren={toggleSiren}
-        toggleVoice={toggleVoice}
-        currentUser={currentUser}
-      />
-      <main className="flex-1 w-full animate-in fade-in duration-300">
-        {activeTab === 'home' && (
-          <Home
-            currentUser={currentUser}
-            contacts={contacts}
-            currentLocation={currentLocation}
-            isVoiceListening={isVoiceListening}
-            toggleVoice={toggleVoice}
-            speechTranscript={speechTranscript}
-            onSosDispatched={handleSosDispatched}
-          />
-        )}
-        {activeTab === 'contacts' && (
-          <Contacts
-            contacts={contacts}
-            setContacts={setContacts}
-            currentUser={currentUser}
-            currentLocation={currentLocation}
-          />
-        )}
-        {activeTab === 'location' && (
-          <Location
-            currentLocation={currentLocation}
-            onRefreshLocation={refreshLocation}
-            currentUser={currentUser}
-          />
-        )}
-        {activeTab === 'logs' && <Logs logs={logs} setLogs={setLogs} />}
-        {activeTab === 'auth' && (
-          <Auth currentUser={currentUser} setCurrentUser={setCurrentUser} />
-        )}
-      </main>
+    <div
+      className={`min-h-screen relative font-sans text-slate-100 overflow-x-hidden transition-colors duration-500 ${
+        isArmed ? 'bg-[#0f0407]' : 'bg-[#07070b]'
+      }`}
+    >
+      {/* Background Cybernetic Particle Constellation */}
+      <ParticleBackground />
+
+      {/* CRT Scanline Visual Filter Overlay */}
+      <div className="scanlines fixed inset-0 pointer-events-none z-30 opacity-40" />
+
+      {/* Top HUD Mission Header */}
+      <HudHeader />
+
+      {/* Main Page Content Container */}
+      <main className="relative z-10 pb-36 sm:pb-40">{renderActiveTab()}</main>
+
+      {/* Floating Tactical Bottom Dock */}
+      <TacticalDock />
+
+      {/* Decoy Fake Phone Call Modal */}
+      <FakeCallModal />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <SecurityProvider>
+        <MainApp />
+      </SecurityProvider>
+    </ErrorBoundary>
   );
 }

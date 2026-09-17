@@ -1,10 +1,188 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-body {
-  margin: 0;
-  background-color: #020617;
-  color: #f8fafc;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+@layer base {
+  :root {
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: 'Space Grotesk', sans-serif;
+    --font-tactical: 'Rajdhani', sans-serif;
+  }
+
+  body {
+    margin: 0;
+    background-color: #07070b;
+    color: #e2e8f0;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
 }
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.font-sans {
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+.font-tactical {
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+/* Tactical Glassmorphism & HUD panels with subtle slow ambient border glow */
+@keyframes border-glow-pulse {
+  0%, 100% {
+    border-color: rgba(0, 229, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 0 12px rgba(0, 229, 255, 0.03);
+  }
+  50% {
+    border-color: rgba(0, 229, 255, 0.32);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55), inset 0 0 16px rgba(0, 229, 255, 0.08);
+  }
+}
+
+.hud-panel {
+  background: rgba(11, 15, 25, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  animation: border-glow-pulse 7s ease-in-out infinite;
+}
+
+.hud-panel-danger {
+  background: rgba(30, 8, 14, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 23, 68, 0.45);
+  box-shadow: 0 0 35px rgba(255, 23, 68, 0.25), inset 0 0 16px rgba(255, 23, 68, 0.1);
+}
+
+.hud-panel-cyber {
+  background: rgba(8, 11, 20, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(124, 77, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(124, 77, 255, 0.05);
+}
+
+.hud-panel-safe {
+  background: rgba(8, 22, 18, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 230, 118, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 230, 118, 0.05);
+}
+
+/* Tactical CRT Scanlines with slow continuous drift */
+@keyframes scanline-drift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 100%, 0 0;
+  }
+}
+
+.scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(0, 229, 255, 0.015),
+    rgba(0, 0, 0, 0.01),
+    rgba(124, 77, 255, 0.015)
+  );
+  background-size: 100% 4px, 6px 100%;
+  animation: scanline-drift 24s linear infinite;
+  pointer-events: none;
+}
+
+/* Cyber Tactical Grid */
+.cyber-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 229, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Glow Utilities */
+.glow-cyan {
+  filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.65));
+}
+
+.glow-red {
+  filter: drop-shadow(0 0 14px rgba(255, 23, 68, 0.75));
+}
+
+.glow-emerald {
+  filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.65));
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 14px rgba(255, 23, 68, 0.8);
+}
+
+.text-glow-emerald {
+  text-shadow: 0 0 12px rgba(0, 230, 118, 0.6);
+}
+
+/* Animations */
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 4s linear infinite;
+}
+
+@keyframes pulse-fast {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-fast {
+  animation: pulse-fast 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes strobe {
+  0%, 100% {
+    background-color: rgba(255, 23, 68, 0.15);
+  }
+  50% {
+    background-color: rgba(255, 23, 68, 0.45);
+  }
+}
+
+.animate-strobe {
+  animation: strobe 0.8s ease-in-out infinite;
+}
+
+/* Custom Tactical Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #07070b;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.6);
+}
+
