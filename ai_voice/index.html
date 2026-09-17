@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Emergency Voice Trigger - Week 3</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 80px;
+    }
+    button {
+      padding: 12px 28px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      background-color: #02C39A;
+      color: white;
+      cursor: pointer;
+    }
+    #status { margin-top: 20px; font-size: 15px; color: #555; }
+    #output { margin-top: 10px; font-size: 15px; font-weight: bold; }
+    #sosLog { margin-top: 25px; font-size: 13px; color: #02C39A; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Emergency Voice Trigger</h2>
+  <button onclick="startListening()">Start Listening</button>
+
+  <p id="status">Not listening</p>
+  <p id="output"></p>
+  <p id="sosLog"></p>
+
+  <script>
+    // ---------- VOICE DETECTION (unchanged since Week 2) ----------
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      document.getElementById("status").innerText = "Listening... try saying 'help'";
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+      document.getElementById("output").innerText = "Heard: " + transcript;
+
+      if (transcript.includes("help")) {
+        keywordDetected();
+      }
+    };
+
+    recognition.onerror = (event) => {
+      document.getElementById("status").innerText = "Error: " + event.error;
+    };
+
+    recognition.onend = () => {
+      document.getElementById("status").innerText = "Stopped listening";
+    };
+
+    function startListening() {
+      recognition.start();
+    }
+
+    function keywordDetected() {
+      document.getElementById("status").innerText = "Keyword 'help' detected! Sending alert...";
+      triggerSOS();
+    }
+
+    // ---------- WEEK 3: REAL CONNECTION TO AASTHA'S /api/sos ROUTE ----------
+    async function triggerSOS() {
+      const payload = {
+        // TODO: replace with a real MongoDB user _id after creating a
+        // test user via /signup and a test contact via /api/contacts.
+        // Aastha's route requires a real user that has at least one
+        // saved emergency contact, or it will respond with an error.
+        userId: "REPLACE_WITH_REAL_USER_ID",
+        latitude: 23.2599,
+        longitude: 77.4126
+      };
+
+      try {
+        const response = await fetch("http://localhost:5000/api/sos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          document.getElementById("sosLog").innerText =
+            "SOS sent! " + data.contactsNotified + " contact(s) notified.";
+        } else {
+          document.getElementById("sosLog").innerText = "Failed: " + data.message;
+        }
+      } catch (error) {
+        document.getElementById("sosLog").innerText =
+          "Could not reach server: " + error.message;
+        console.error("Fetch error:", error);
+      }
+    }
+  </script>
+</body>
+</html>
