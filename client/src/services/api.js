@@ -1,3 +1,41 @@
+const API_URL = "http://127.0.0.1:5000";
+
+export const signupUser = async (userData) => {
+  const response = await fetch(`${API_URL}/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Signup failed");
+  }
+
+  return data;
+};
+
+export const loginUser = async (userData) => {
+  const response = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Login failed");
+  }
+
+  return data;
+};
+
 export const getUserProfile = async () => {
   const saved = localStorage.getItem('suraksha_user');
   return saved ? JSON.parse(saved) : { name: 'Vaishnavi Mishra', email: 'user@vitbhopal.ac.in', regNo: '25BCE10943' };

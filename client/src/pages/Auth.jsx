@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, User, Lock, Mail, CheckCircle } from 'lucide-react';
+import { signupUser, loginUser } from "../services/api";
 
 export default function Auth({ currentUser, setCurrentUser }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,17 +11,44 @@ export default function Auth({ currentUser, setCurrentUser }) {
   });
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const updated = {
-      name: formData.name || 'Vaishnavi Mishra',
-      email: formData.email || 'user@suraksha.ai',
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setMessage('');
+
+  try {
+    let data;
+
+    if (isLogin) {
+      data = await loginUser({
+        email: formData.email,
+        password: formData.password,
+      });
+    } else {
+      data = await signupUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+    }
+
+    const user = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
     };
-    setCurrentUser(updated);
-    localStorage.setItem('suraksha_user', JSON.stringify(updated));
-    setMessage('Profile updated successfully!');
-    setTimeout(() => setMessage(''), 3000);
-  };
+
+    setCurrentUser(user);
+    localStorage.setItem('suraksha_user', JSON.stringify(user));
+
+    setMessage(
+      isLogin
+        ? 'Login successful!'
+        : 'Account created successfully!'
+    );
+  } catch (error) {
+    setMessage(error.message);
+  }
+};
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl">
@@ -83,7 +111,7 @@ export default function Auth({ currentUser, setCurrentUser }) {
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="••••••••"
+              placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
               className="bg-transparent text-sm w-full outline-none text-slate-200"
             />
           </div>

@@ -67,6 +67,7 @@ app.post("/signup", async (req, res) => {
         res.status(201).json({
             message: "Signup successful!",
             user: {
+                id: newUser._id,
                 name: newUser.name,
                 email: newUser.email
             }
@@ -116,6 +117,7 @@ app.post("/login", async (req, res) => {
         res.status(200).json({
             message: "Login successful!",
             user: {
+                id: user._id,
                 name: user.name,
                 email: user.email
             }
