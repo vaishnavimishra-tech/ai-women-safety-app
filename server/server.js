@@ -1,12 +1,13 @@
 require("dotenv").config();
 
+const User = require("./models/user");
+const Contact = require("./models/contact");
+const LocationHistory = require("./models/locationHistory");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const twilio = require("twilio");
 
-const User = require("./models/user");
-const Contact = require("./models/contact");
 
 const app = express();
 
@@ -14,6 +15,11 @@ const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
 );
+
+const cors = require("cors");
+app.use(cors());
+app.use(express.json());
+
 //commit
 app.use(express.json());
 
@@ -204,6 +210,67 @@ app.get("/api/contacts/:userId", async (req, res) => {
         });
     }
 });
+
+
+// Save Location API
+app.post("/api/location", async (req, res) => {
+    try {
+        const { userId, latitude, longitude, accuracy, mapsLink } = req.body;
+
+        if (!userId || latitude === undefined || longitude === undefined) {
+            return res.status(400).json({
+                message: "User ID and location are required"
+            });
+        }
+
+        const newLocation = new LocationHistory({
+            userId,
+            latitude,
+            longitude,
+            accuracy,
+            mapsLink,
+            triggeredBy: "manual"
+        });
+
+        await newLocation.save();
+
+        res.status(201).json({
+            message: "Location saved successfully",
+            data: newLocation
+        });
+
+    } catch (error) {
+        console.log("Save location error:", error);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// Get Location History API
+app.get("/api/location/history/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const history = await LocationHistory.find({ userId }).sort({ timestamp: -1 });
+
+        res.status(200).json({
+            message: "Location history fetched successfully",
+            history
+        });
+
+    } catch (error) {
+        console.log("Fetch history error:", error);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// SOS Alert API
+
 
 // SOS Alert API
 app.post("/api/sos", async (req, res) => {
