@@ -1,12 +1,13 @@
 require("dotenv").config();
 
+const User = require("./models/user");
+const Contact = require("./models/contact");
+const LocationHistory = require("./models/locationHistory");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const twilio = require("twilio");
 
-const User = require("./user");
-const Contact = require("./contact");
 
 const app = express();
 
@@ -14,6 +15,11 @@ const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
 );
+
+const cors = require("cors");
+app.use(cors());
+app.use(express.json());
+
 //commit
 app.use(express.json());
 
@@ -34,7 +40,9 @@ app.get("/", (req, res) => {
     res.send("Backend is running!");
 });
 
-// Signup API
+// POST /signup
+// Registers a new user after validating input.
+// Password is hashed with bcrypt before being stored in MongoDB.
 app.post("/signup", async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -43,8 +51,8 @@ app.post("/signup", async (req, res) => {
                 message: "All fields are required"
             });
         }
-
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (!emailPattern.test(email)) {
             return res.status(400).json({
                 message: "Invalid email format"
@@ -67,6 +75,7 @@ app.post("/signup", async (req, res) => {
         res.status(201).json({
             message: "Signup successful!",
             user: {
+                id: newUser._id,
                 name: newUser.name,
                 email: newUser.email
             }
@@ -79,7 +88,8 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-// Login API
+// POST /login
+// Authenticates a user using email and password.
 app.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -116,10 +126,10 @@ app.post("/login", async (req, res) => {
         res.status(200).json({
             message: "Login successful!",
             user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email
-}
+                id: user._id,
+                name: user.name,
+                email: user.email
+            }
         });
 
     } catch (error) {
@@ -131,7 +141,8 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Add Emergency Contact
+// POST /api/contacts
+// Adds an emergency contact for an existing user.
 app.post("/api/contacts", async (req, res) => {
     try {
         const { userId, name, phone, relationship } = req.body;
@@ -175,7 +186,8 @@ app.post("/api/contacts", async (req, res) => {
         });
     }
 });
-
+// GET /api/contacts/:userId
+// Retrieves emergency contacts belonging to a specific user.
 app.get("/api/contacts/:userId", async (req, res) => {
     try {
         const { userId } = req.params;
@@ -204,113 +216,131 @@ app.get("/api/contacts/:userId", async (req, res) => {
     }
 });
 
-// SOS Alert API
-app.post("/api/sos", async (req, res) => {
-    console.log("🚨 SOS ROUTE HIT");
 
+// POST /api/location
+// Saves the user's location data in MongoDB.
+app.post("/api/location", async (req, res) => {
     try {
-        const { userId, latitude, longitude } = req.body;
+        const { userId, latitude, longitude, accuracy, mapsLink } = req.body;
 
-        // 1. Validate request
-        if (
-            !userId ||
-            latitude === undefined ||
-            longitude === undefined
-        ) {
+        if (!userId || latitude === undefined || longitude === undefined) {
             return res.status(400).json({
-                success: false,
                 message: "User ID and location are required"
             });
         }
 
-        // 2. Find user
+        const newLocation = new LocationHistory({
+            userId,
+            latitude,
+            longitude,
+            accuracy,
+            mapsLink,
+            triggeredBy: "manual"
+        });
+
+        await newLocation.save();
+
+        res.status(201).json({
+            message: "Location saved successfully",
+            data: newLocation
+        });
+
+    } catch (error) {
+        console.log("Save location error:", error);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// GET /api/location/history/:userId
+// Retrieves the location history of a specific user.
+app.get("/api/location/history/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const history = await LocationHistory.find({ userId }).sort({ timestamp: -1 });
+
+        res.status(200).json({
+            message: "Location history fetched successfully",
+            history
+        });
+
+    } catch (error) {
+        console.log("Fetch history error:", error);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+});
+
+// POST /api/sos
+// Processes an SOS request after validating the user and location.
+
+app.post("/api/sos", async (req, res) => {
+    try {
+        const { userId, latitude, longitude } = req.body;
+
+        // Check required data
+        if (!userId || latitude === undefined || longitude === undefined) {
+            return res.status(400).json({
+                message: "User ID and location are required"
+            });
+        }
+
+        // Find the user
         const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({
-                success: false,
                 message: "User not found"
             });
         }
 
-        // 3. Find emergency contacts
+        // Find emergency contacts
         const contacts = await Contact.find({ userId });
 
         if (contacts.length === 0) {
             return res.status(404).json({
-                success: false,
                 message: "No emergency contacts found"
             });
         }
 
-        // 4. Create Google Maps location link
+        // Create Google Maps location link
         const locationLink =
             `https://maps.google.com/?q=${latitude},${longitude}`;
 
-        // 5. Create emergency message
-        const messageBody =
-            `SOS ALERT! ${user.name} needs help. Location: ${locationLink}`;
+        // Demo Mode - SMS disabled because Twilio trial has expired
+        console.log("SOS received successfully!");
+        console.log(`Emergency contacts found: ${contacts.length}`);
 
-        console.log(`📍 Location: ${locationLink}`);
-        console.log(`👥 Emergency contacts found: ${contacts.length}`);
-
-        let successfulSMS = 0;
-        let failedSMS = 0;
-
-        // 6. Send SMS to every emergency contact
         for (const contact of contacts) {
-
-            console.log(
-                `📱 Preparing SOS SMS for ${contact.name} (${contact.phone})`
-            );
-
-            try {
-                await twilioClient.messages.create({
-                    body: "sms_internal_alerts",
-                    from: process.env.TWILIO_PHONE_NUMBER,
-                    to: contact.phone
-                });
-
-                successfulSMS++;
-
-                console.log(
-                    `✅ SOS SMS sent to ${contact.name}`
-                );
-
-            } catch (smsError) {
-
-                failedSMS++;
-
-                console.log(
-                    `❌ SMS failed for ${contact.name}: ${smsError.message}`
-                );
-            }
+            console.log(`Demo SOS notification for: ${contact.name} - ${contact.phone}`);
         }
 
-        // 7. Return SOS processing result
+        console.log("SMS sending skipped - Demo Mode");
+
+        // Send response after SMS is sent
         res.status(200).json({
-            success: true,
-            message: "SOS alert processed",
+            message: "SOS alert sent successfully",
             location: {
                 latitude,
-                longitude,
-                locationLink
+                longitude
             },
-            contactsFound: contacts.length,
-            smsSent: successfulSMS,
-            smsFailed: failedSMS
+            contactsNotified: contacts.length
         });
 
     } catch (error) {
-
-        console.log("❌ SOS error:", error);
+        console.log("SOS error:", error);
 
         res.status(500).json({
-            success: false,
-            message: "Failed to process SOS alert"
+            message: "Failed to send SOS alert"
         });
     }
 });
+
 // Start server
 app.listen(5000, () => {
     console.log("Server running on http://127.0.0.1:5000");

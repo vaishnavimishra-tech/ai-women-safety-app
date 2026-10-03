@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { loginUser, registerUser } from '../services/api';
 import { Shield, User, Lock, Mail, CheckCircle } from 'lucide-react';
+import { signupUser, loginUser } from "../services/api";
 
 export default function Auth({ currentUser, setCurrentUser }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,41 +12,17 @@ export default function Auth({ currentUser, setCurrentUser }) {
   });
   const [message, setMessage] = useState('');
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    if (isLogin) {
-      const user = await loginUser(
-        formData.email,
-        formData.password
-      );
-
-      setCurrentUser(user);
-      setMessage('Login successful!');
-    } else {
-      const user = await registerUser(
-        formData.name,
-        formData.email,
-        formData.password
-      );
-
-      setMessage('Registration successful! Please log in.');
-      setIsLogin(true);
-
-      setFormData({
-        name: '',
-        email: formData.email,
-        password: '',
-      });
-    }
-
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const updated = {
+      name: formData.name || 'Vaishnavi Mishra',
+      email: formData.email || 'user@suraksha.ai',
+    };
+    setCurrentUser(updated);
+    localStorage.setItem('suraksha_user', JSON.stringify(updated));
+    setMessage('Profile updated successfully!');
     setTimeout(() => setMessage(''), 3000);
-  } catch (error) {
-    setMessage(error.message);
-  }
-};
-
+  };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl">

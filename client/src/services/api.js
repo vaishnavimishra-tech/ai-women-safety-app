@@ -1,3 +1,41 @@
+const API_URL = "http://127.0.0.1:5000";
+
+export const signupUser = async (userData) => {
+  const response = await fetch(`${API_URL}/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Signup failed");
+  }
+
+  return data;
+};
+
+export const loginUser = async (userData) => {
+  const response = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Login failed");
+  }
+
+  return data;
+};
+
 export const getUserProfile = async () => {
   const saved = localStorage.getItem('suraksha_user');
   return saved ? JSON.parse(saved) : { name: 'Vaishnavi Mishra', email: 'user@vitbhopal.ac.in', regNo: '25BCE10943' };
@@ -33,19 +71,44 @@ export const recordLocationLog = async (coords) => {
 };
 
 export const triggerSOSRequest = async (payload) => {
-  const history = await fetchLocationLogs();
-  const incident = {
-    id: Date.now(),
-    type: 'CRITICAL SOS ALERT',
-    time: new Date().toLocaleTimeString(),
-    date: new Date().toLocaleDateString(),
-    lat: payload?.location?.lat || 28.6139,
-    lng: payload?.location?.lng || 77.2090,
-  };
-  localStorage.setItem('suraksha_loc_history', JSON.stringify([incident, ...history]));
+  const user = JSON.parse(localStorage.getItem("suraksha_user"));
+
+  const userId = user?.id;
+
+  const latitude = payload?.location?.lat;
+  const longitude = payload?.location?.lng;
+
+  if (!userId) {
+    throw new Error("User ID not found. Please login again.");
+  }
+
+  if (latitude === undefined || longitude === undefined) {
+    throw new Error("Location not available.");
+  }
+
+  const response = await fetch(`${API_URL}/api/sos`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId,
+      latitude,
+      longitude,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "SOS request failed");
+  }
+
   return {
     success: true,
-    message: 'Emergency SOS broadcasted with live coordinates!',
+    message: data.message,
+    contactsNotified: data.contactsNotified,
+    location: data.location,
   };
 };
 export const loginUser = async (email, password) => {

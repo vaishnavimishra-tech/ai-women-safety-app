@@ -9,6 +9,7 @@ import StealthCalculator from './components/layout/StealthCalculator';
 import FakeCallModal from './components/toolkit/FakeCallModal';
 
 import LandingHeroPage from './pages/LandingHeroPage';
+import Auth from './pages/Auth';
 import PanicHubPage from './pages/PanicHubPage';
 import RadarMapPage from './pages/RadarMapPage';
 import GuardianNetworkPage from './pages/GuardianNetworkPage';
@@ -19,6 +20,12 @@ import SettingsPage from './pages/SettingsPage';
 
 function MainApp() {
   const { activeTab, stealthMode, armedState } = useSecurity();
+  
+  const [currentUser, setCurrentUser] = React.useState(null);
+
+  if (!currentUser) {
+    return <Auth currentUser={currentUser} setCurrentUser={setCurrentUser} />;
+  }
 
   if (stealthMode) {
     return <StealthCalculator />;
