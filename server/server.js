@@ -40,7 +40,9 @@ app.get("/", (req, res) => {
     res.send("Backend is running!");
 });
 
-// Signup API
+// POST /signup
+// Registers a new user after validating input.
+// Password is hashed with bcrypt before being stored in MongoDB.
 app.post("/signup", async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -49,8 +51,8 @@ app.post("/signup", async (req, res) => {
                 message: "All fields are required"
             });
         }
-
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (!emailPattern.test(email)) {
             return res.status(400).json({
                 message: "Invalid email format"
@@ -86,7 +88,8 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-// Login API
+// POST /login
+// Authenticates a user using email and password.
 app.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -138,7 +141,8 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Add Emergency Contact
+// POST /api/contacts
+// Adds an emergency contact for an existing user.
 app.post("/api/contacts", async (req, res) => {
     try {
         const { userId, name, phone, relationship } = req.body;
@@ -182,7 +186,8 @@ app.post("/api/contacts", async (req, res) => {
         });
     }
 });
-
+// GET /api/contacts/:userId
+// Retrieves emergency contacts belonging to a specific user.
 app.get("/api/contacts/:userId", async (req, res) => {
     try {
         const { userId } = req.params;
@@ -212,7 +217,8 @@ app.get("/api/contacts/:userId", async (req, res) => {
 });
 
 
-// Save Location API
+// POST /api/location
+// Saves the user's location data in MongoDB.
 app.post("/api/location", async (req, res) => {
     try {
         const { userId, latitude, longitude, accuracy, mapsLink } = req.body;
@@ -248,7 +254,8 @@ app.post("/api/location", async (req, res) => {
     }
 });
 
-// Get Location History API
+// GET /api/location/history/:userId
+// Retrieves the location history of a specific user.
 app.get("/api/location/history/:userId", async (req, res) => {
     try {
         const { userId } = req.params;
@@ -269,10 +276,9 @@ app.get("/api/location/history/:userId", async (req, res) => {
     }
 });
 
-// SOS Alert API
+// POST /api/sos
+// Processes an SOS request after validating the user and location.
 
-
-// SOS Alert API
 app.post("/api/sos", async (req, res) => {
     try {
         const { userId, latitude, longitude } = req.body;
