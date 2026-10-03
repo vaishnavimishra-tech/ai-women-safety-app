@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Auth from './pages/auth';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { SecurityProvider, useSecurity } from './context/SecurityContext';
 import ParticleBackground from './components/3d/ParticleBackground';
@@ -76,11 +77,23 @@ function MainApp() {
 }
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem('suraksha_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
   return (
     <ErrorBoundary>
-      <SecurityProvider>
-        <MainApp />
-      </SecurityProvider>
+      {currentUser ? (
+        <SecurityProvider>
+          <MainApp />
+        </SecurityProvider>
+      ) : (
+        <Auth
+          currentUser={currentUser}
+          setCurrentUser={setCurrentUser}
+        />
+      )}
     </ErrorBoundary>
   );
 }

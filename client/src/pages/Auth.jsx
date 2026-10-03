@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { loginUser, registerUser } from '../services/api';
 import { Shield, User, Lock, Mail, CheckCircle } from 'lucide-react';
 
 export default function Auth({ currentUser, setCurrentUser }) {
@@ -10,17 +11,41 @@ export default function Auth({ currentUser, setCurrentUser }) {
   });
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const updated = {
-      name: formData.name || 'Vaishnavi Mishra',
-      email: formData.email || 'user@suraksha.ai',
-    };
-    setCurrentUser(updated);
-    localStorage.setItem('suraksha_user', JSON.stringify(updated));
-    setMessage('Profile updated successfully!');
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    if (isLogin) {
+      const user = await loginUser(
+        formData.email,
+        formData.password
+      );
+
+      setCurrentUser(user);
+      setMessage('Login successful!');
+    } else {
+      const user = await registerUser(
+        formData.name,
+        formData.email,
+        formData.password
+      );
+
+      setMessage('Registration successful! Please log in.');
+      setIsLogin(true);
+
+      setFormData({
+        name: '',
+        email: formData.email,
+        password: '',
+      });
+    }
+
     setTimeout(() => setMessage(''), 3000);
-  };
+  } catch (error) {
+    setMessage(error.message);
+  }
+};
+
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl">
@@ -83,7 +108,7 @@ export default function Auth({ currentUser, setCurrentUser }) {
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="••••••••"
+              placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
               className="bg-transparent text-sm w-full outline-none text-slate-200"
             />
           </div>

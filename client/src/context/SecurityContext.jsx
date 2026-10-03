@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { tacticalAudio } from '../services/audioService';
 import { geoService, DEFAULT_TACTICAL_COORDS } from '../services/geolocationService';
+import { addContact } from '../services/api';
 
 const SecurityContext = createContext(null);
 
@@ -198,7 +199,7 @@ export function SecurityProvider({ children }) {
   };
 
   // SOS ARMING
-  const armSos = (triggerSource = "MANUAL_HOLD") => {
+  const armSos = async(triggerSource = "MANUAL_HOLD") => {
     setArmedState('ARMED');
     setDefconLevel(1);
     tacticalAudio.startSosSiren();
@@ -206,6 +207,36 @@ export function SecurityProvider({ children }) {
     // Trigger haptic vibration if supported
     if (typeof window !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([300, 100, 300, 100, 500]);
+    }
+        try {
+      const userId = JSON.parse(localStorage.getItem('suraksha_user'))?.id;
+
+      if (!userId) {
+        throw new Error("User ID not found. Please log in first.");
+      }
+
+      const response = await fetch('http://127.0.0.1:5000/api/sos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          latitude: telemetry.latitude,
+          longitude: telemetry.longitude,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "SOS request failed");
+      }
+
+      console.log("🚨 SOS backend response:", data);
+
+    } catch (error) {
+      console.error("❌ SOS backend error:", error);
     }
 
     logEvent(
@@ -254,8 +285,21 @@ export function SecurityProvider({ children }) {
     return { success: false, error: "Invalid Disarm PIN" };
   };
 
-  const addGuardian = (newG) => {
-    const guardian = {
+  const addGuardian = async (newG) => {
+    try {
+      const userId = JSON.parse(localStorage.getItem('suraksha_user'))?.id;
+
+      if (!userId) {
+        throw new Error('User ID not found. Please log in first.');
+      }
+
+      await addContact(
+        userId,
+        newG.name,
+        newG.phone,
+        newG.relation
+      );
+        const guardian = {
       id: "g-" + Date.now(),
       status: "REACHABLE",
       battery: 90,
@@ -264,10 +308,29 @@ export function SecurityProvider({ children }) {
       isPrimary: guardians.length === 0,
       ...newG
     };
+
     setGuardians((prev) => [...prev, guardian]);
-    logEvent("GUARDIAN_ADDED", `Guardian Enrolled: ${guardian.name}`, `Phone: ${guardian.phone} | Relation: ${guardian.relation}`, "SAFE");
+
+    logEvent(
+      "GUARDIAN_ADDED",
+      `Guardian Enrolled: ${guardian.name}`,
+      `Phone: ${guardian.phone} | Relation: ${guardian.relation}`,
+      "SAFE"
+    );
+
     tacticalAudio.playClick();
-  };
+
+  } catch (error) {
+    console.error("Add guardian error:", error);
+
+    logEvent(
+      "GUARDIAN_ADD_FAILED",
+      "Guardian Enrollment Failed",
+      error.message,
+      "CRITICAL"
+    );
+  }
+};
 
   const removeGuardian = (id) => {
     const g = guardians.find((x) => x.id === id);

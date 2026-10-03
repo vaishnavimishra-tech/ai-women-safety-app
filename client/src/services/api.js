@@ -48,3 +48,66 @@ export const triggerSOSRequest = async (payload) => {
     message: 'Emergency SOS broadcasted with live coordinates!',
   };
 };
+export const loginUser = async (email, password) => {
+  const response = await fetch('http://127.0.0.1:5000/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Login failed');
+  }
+
+  localStorage.setItem('suraksha_user', JSON.stringify(data.user));
+
+  return data.user;
+};
+export const registerUser = async (name, email, password) => {
+  const response = await fetch('http://127.0.0.1:5000/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name,
+      email,
+      password,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Registration failed');
+  }
+
+  return data.user;
+};
+
+export const addContact = async (userId, name, phone, relationship) => {
+  const response = await fetch('http://127.0.0.1:5000/api/contacts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      userId,
+      name,
+      phone,
+      relationship,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to add emergency contact');
+  }
+
+  return data.contact;
+};
