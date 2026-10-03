@@ -306,16 +306,15 @@ app.post("/api/sos", async (req, res) => {
         const locationLink =
             `https://maps.google.com/?q=${latitude},${longitude}`;
 
-        // Send SMS to every emergency contact
-        for (const contact of contacts) {
-            await twilioClient.messages.create({
-                body: "sms_appointment_reminders",
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: process.env.TWILIO_TO_PHONE_NUMBER,
-            });
+        // Demo Mode - SMS disabled because Twilio trial has expired
+        console.log("SOS received successfully!");
+        console.log(`Emergency contacts found: ${contacts.length}`);
 
-            console.log(`SOS SMS sent to ${contact.name}`);
+        for (const contact of contacts) {
+            console.log(`Demo SOS notification for: ${contact.name} - ${contact.phone}`);
         }
+
+        console.log("SMS sending skipped - Demo Mode");
 
         // Send response after SMS is sent
         res.status(200).json({
