@@ -58,3 +58,24 @@ The AI Women Safety App provides a quick, accessible, and explainable safety mec
 ```bash
 git clone [https://github.com/](https://github.com/)<your-github-username>/ai-women-safety-app.git
 cd ai-women-safety-app
+
+---
+
+## 🚀 Running Locally
+
+```bash
+# Backend
+cd server
+cp .env.example .env     # fill in MONGO_URI and Twilio keys
+npm install
+npm start                # http://127.0.0.1:5000
+
+# Frontend
+cd client
+cp .env.example .env
+npm install
+npm run dev
+```
+
+SMS runs in **DEMO mode** (logged to console) until Twilio credentials are set. On a Twilio trial account, recipient numbers must be verified in the Twilio console.
+See `docs/SOS_FLOW.md` for the full SOS flow.

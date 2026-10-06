@@ -21,10 +21,10 @@ import TelemetryText from '../components/common/TelemetryText';
 import StatusBadge from '../components/common/StatusBadge';
 
 export default function SettingsPage() {
-  const { soundEnabled, toggleSound, setStealthMode } = useSecurity();
+  const { soundEnabled, toggleSound, setStealthMode, shakeEnabled, shakeSupported, toggleShake } = useSecurity();
+  const [shakeError, setShakeError] = useState('');
 
   const [autoRecordAudio, setAutoRecordAudio] = useState(true);
-  const [shakeToTrigger, setShakeToTrigger] = useState(true);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [lowPower3d, setLowPower3d] = useState(false);
   const [disarmPin, setDisarmPin] = useState('1234');
@@ -166,21 +166,26 @@ export default function SettingsPage() {
                     Shake-To-Trigger Accelerometer Sensor
                   </h4>
                   <p className="text-[11px] font-mono text-slate-400">
-                    Arms emergency protocol when device experiences high G-force shake.
+                    Shake the phone 3 times to send an SOS (5s cancel window).
+                    {!shakeSupported && ' Not supported on this device.'}
                   </p>
+                  {shakeError && (
+                    <p className="text-[11px] font-mono text-rose-400 mt-1">{shakeError}</p>
+                  )}
                 </div>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     tacticalAudio.playClick();
-                    setShakeToTrigger(!shakeToTrigger);
+                    const res = await toggleShake();
+                    setShakeError(res.ok ? '' : res.error);
                   }}
                   className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                    shakeToTrigger ? 'bg-cyan-500 shadow-[0_0_10px_#00e5ff]' : 'bg-slate-700'
+                    shakeEnabled ? 'bg-cyan-500 shadow-[0_0_10px_#00e5ff]' : 'bg-slate-700'
                   }`}
                 >
                   <span
                     className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                      shakeToTrigger ? 'translate-x-6' : 'translate-x-0'
+                      shakeEnabled ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
                 </button>

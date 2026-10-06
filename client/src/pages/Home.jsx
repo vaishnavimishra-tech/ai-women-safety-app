@@ -20,8 +20,8 @@ export default function Home({
     
     try {
       const payload = {
-        userId: currentUser?.regNo || 'DEF-01',
         location: currentLocation,
+        triggerSource: 'HOME_BUTTON',
         timestamp: new Date().toISOString(),
       };
       const res = await triggerSOSRequest(payload);
@@ -37,8 +37,8 @@ export default function Home({
       
       setStatusMsg(res?.message || 'Alert successfully transmitted.');
     } catch (err) {
-      console.error(err);
-      setStatusMsg('Alert broadcast complete (local mesh network).');
+     console.error(err);
+      setStatusMsg(err.message || 'SOS alert failed.');
     }
 
     setTimeout(() => {
