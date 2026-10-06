@@ -1,4 +1,5 @@
 require("dotenv").config();
+const path = require("path");
 
 const User = require("./models/user");
 const Contact = require("./models/contact");
@@ -28,10 +29,10 @@ mongoose.connect(process.env.MONGO_URI)
         console.log("MongoDB connection failed:", error.message);
     });
 
-// Test route
-app.get("/", (req, res) => {
-    res.send("Backend is running!");
-});
+// Test route - disabled now that frontend is served at "/"
+// app.get("/", (req, res) => {
+//     res.send("Backend is running!");
+// });
 
 // POST /signup
 // Registers a new user after validating input.
@@ -384,6 +385,13 @@ app.get("/api/sos/history/:userId", async (req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
+// Serve the React frontend build
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+app.get("/*splat", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on http://127.0.0.1:${PORT}`);
 });
