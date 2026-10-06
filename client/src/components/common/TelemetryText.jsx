@@ -4,7 +4,7 @@ export default function TelemetryText({
   label,
   value,
   unit = "",
-  variant = "cyan", // 'cyan' | 'red' | 'green' | 'amber'
+  variant = "rose", // 'rose' | 'cyan' | 'red' | 'green' | 'amber' | 'lavender'
   className = ""
 }) {
   const [displayValue, setDisplayValue] = useState(value);
@@ -59,11 +59,13 @@ export default function TelemetryText({
   }, [value]);
 
   const colorClasses = {
-    cyan: "text-cyan-400 text-glow-cyan",
+    rose: "text-rose-400 text-glow-rose",
+    lavender: "text-indigo-300 text-glow-lavender",
+    cyan: "text-rose-400 text-glow-rose",
     red: "text-rose-400 text-glow-red",
     green: "text-emerald-400 text-glow-emerald",
     amber: "text-amber-400"
-  }[variant] || "text-cyan-400";
+  }[variant] || "text-rose-400";
 
   return (
     <div ref={elementRef} className={`flex flex-col font-mono select-none ${className}`}>

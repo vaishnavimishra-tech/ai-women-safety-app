@@ -84,6 +84,16 @@ const INITIAL_LOGS = [
 ];
 
 export function SecurityProvider({ children }) {
+  // User Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('suraksha_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [activeTab, setActiveTab] = useState('hero');
   const [armedState, setArmedState] = useState('STANDBY'); // STANDBY, ARMED, DISPATCHED
   const [defconLevel, setDefconLevel] = useState(5); // 5 (Nominal) -> 1 (SOS Armed)
@@ -117,10 +127,22 @@ export function SecurityProvider({ children }) {
     }
   });
 
-  // Functional System Status
+  // Functional System Status (Empathetic & Human-Centric)
   const systemStatus = armedState === 'ARMED'
-    ? 'SYSTEM ARMED // SOS ACTIVE'
-    : `STANDBY // ${guardians.length} GUARDIANS SYNCED`;
+    ? 'EMERGENCY SOS BROADCAST ACTIVE'
+    : `SHIELD ACTIVE // ${guardians.length} GUARDIANS CONNECTED`;
+
+  // Shake-to-SOS State & Accelerometer Hooks
+  const [shakeToSosEnabled, setShakeToSosEnabled] = useState(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('suraksha_shake_sos_enabled') !== 'false' : true;
+  });
+  const [recentShakeCount, setRecentShakeCount] = useState(0);
+  const [shakeStatusMessage, setShakeStatusMessage] = useState('');
+  const [motionPermission, setMotionPermission] = useState('prompt');
+
+  const lastAccRef = useRef({ x: 0, y: 0, z: 0 });
+  const lastShakeTimestampRef = useRef(0);
+  const shakeResetTimerRef = useRef(null);
 
   // Hotword state
   const [isHotwordListening, setIsHotwordListening] = useState(false);
@@ -272,7 +294,7 @@ export function SecurityProvider({ children }) {
 
   const dismissSosNotice = () => setSosNotice(null);
 
-  // ---- Shake trigger ----
+  // ---- Shake trigger with countdown ----
   const cancelShakeCountdown = () => {
     if (shakeTimerRef.current) {
       clearInterval(shakeTimerRef.current);
@@ -326,8 +348,7 @@ export function SecurityProvider({ children }) {
   // Always point the shake timer at the latest armSos
   armSosRef.current = armSos;
 
-  // Re-start shake detection after a page reload (works directly on Android;
-  // iOS needs the user to re-enable it with a tap because of the permission rule)
+  // Re-start shake detection after a page reload (works directly on Android)
   useEffect(() => {
     if (shakeEnabled && shakeSupported && !shakeService.needsPermission()) {
       shakeService.start(handleShakeDetected);
@@ -338,6 +359,115 @@ export function SecurityProvider({ children }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Shake-to-SOS Interactive Feedback Handlers
+  const registerShake = () => {
+    if (!shakeToSosEnabled || armedState === 'ARMED') return;
+
+    if (shakeResetTimerRef.current) {
+      clearTimeout(shakeResetTimerRef.current);
+    }
+
+    setRecentShakeCount((prev) => {
+      const next = prev + 1;
+      if (next === 1) {
+        tacticalAudio.playShakeTone(1);
+        if (typeof window !== 'undefined' && navigator.vibrate) navigator.vibrate(100);
+        setShakeStatusMessage('Shake 1/3 detected');
+      } else if (next === 2) {
+        tacticalAudio.playShakeTone(2);
+        if (typeof window !== 'undefined' && navigator.vibrate) navigator.vibrate([120, 60, 120]);
+        setShakeStatusMessage('Shake 2/3 detected — Shake once more to trigger SOS!');
+      } else if (next >= 3) {
+        tacticalAudio.playShakeTone(3);
+        if (typeof window !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 300]);
+        setShakeStatusMessage('Shake 3/3 — SOS Signal Broadcasted!');
+        armSos("DEVICE_SHAKE_3X");
+        
+        setTimeout(() => {
+          setRecentShakeCount(0);
+          setShakeStatusMessage('');
+        }, 2000);
+        return 3;
+      }
+
+      // Rolling 2.8s reset window
+      shakeResetTimerRef.current = setTimeout(() => {
+        setRecentShakeCount(0);
+        setShakeStatusMessage('');
+      }, 2800);
+
+      return next;
+    });
+  };
+
+  const simulateShake = () => {
+    registerShake();
+  };
+
+  const simulateFullShakeSequence = () => {
+    registerShake();
+    setTimeout(() => {
+      registerShake();
+      setTimeout(() => {
+        registerShake();
+      }, 400);
+    }, 400);
+  };
+
+  const requestMotionPermission = async () => {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      try {
+        const response = await DeviceMotionEvent.requestPermission();
+        setMotionPermission(response);
+        return response === 'granted';
+      } catch (err) {
+        setMotionPermission('denied');
+        return false;
+      }
+    }
+    setMotionPermission('granted');
+    return true;
+  };
+
+  // Save Shake setting
+  useEffect(() => {
+    try {
+      localStorage.setItem('suraksha_shake_sos_enabled', shakeToSosEnabled ? 'true' : 'false');
+    } catch {}
+  }, [shakeToSosEnabled]);
+
+  // Accelerometer Event Listener
+  useEffect(() => {
+    if (!shakeToSosEnabled || typeof window === 'undefined') return;
+
+    const handleDeviceMotion = (e) => {
+      if (armedState === 'ARMED') return;
+      const acc = e.accelerationIncludingGravity || e.acceleration;
+      if (!acc || acc.x === null) return;
+
+      const now = Date.now();
+      if (now - lastShakeTimestampRef.current < 280) return; // cooldown debounce
+
+      const deltaX = Math.abs(acc.x - (lastAccRef.current.x || 0));
+      const deltaY = Math.abs(acc.y - (lastAccRef.current.y || 0));
+      const deltaZ = Math.abs(acc.z - (lastAccRef.current.z || 0));
+      const totalDelta = deltaX + deltaY + deltaZ;
+
+      lastAccRef.current = { x: acc.x, y: acc.y, z: acc.z };
+
+      if (totalDelta > 16.5) {
+        lastShakeTimestampRef.current = now;
+        registerShake();
+      }
+    };
+
+    window.addEventListener('devicemotion', handleDeviceMotion, { passive: true });
+    return () => {
+      window.removeEventListener('devicemotion', handleDeviceMotion);
+      if (shakeResetTimerRef.current) clearTimeout(shakeResetTimerRef.current);
+    };
+  }, [shakeToSosEnabled, armedState]);
 
   // SOS DISARM
   const disarmSos = (enteredPin) => {
@@ -391,38 +521,37 @@ export function SecurityProvider({ children }) {
         newG.phone,
         newG.relation
       );
-        const guardian = {
-      id: "g-" + Date.now(),
-      status: "REACHABLE",
-      battery: 90,
-      latency: "20ms",
-      lastPing: "Just now",
-      isPrimary: guardians.length === 0,
-      ...newG
-    };
+      const guardian = {
+        id: "g-" + Date.now(),
+        status: "REACHABLE",
+        battery: 90,
+        latency: "20ms",
+        lastPing: "Just now",
+        isPrimary: guardians.length === 0,
+        ...newG
+      };
 
-    setGuardians((prev) => [...prev, guardian]);
+      setGuardians((prev) => [...prev, guardian]);
 
-    logEvent(
-      "GUARDIAN_ADDED",
-      `Guardian Enrolled: ${guardian.name}`,
-      `Phone: ${guardian.phone} | Relation: ${guardian.relation}`,
-      "SAFE"
-    );
+      logEvent(
+        "GUARDIAN_ADDED",
+        `Guardian Enrolled: ${guardian.name}`,
+        `Phone: ${guardian.phone} | Relation: ${guardian.relation}`,
+        "SAFE"
+      );
 
-    tacticalAudio.playClick();
+      tacticalAudio.playClick();
+    } catch (error) {
+      console.error("Add guardian error:", error);
 
-  } catch (error) {
-    console.error("Add guardian error:", error);
-
-    logEvent(
-      "GUARDIAN_ADD_FAILED",
-      "Guardian Enrollment Failed",
-      error.message,
-      "CRITICAL"
-    );
-  }
-};
+      logEvent(
+        "GUARDIAN_ADD_FAILED",
+        "Guardian Enrollment Failed",
+        error.message,
+        "CRITICAL"
+      );
+    }
+  };
 
   const removeGuardian = (id) => {
     const g = guardians.find((x) => x.id === id);
@@ -460,9 +589,22 @@ export function SecurityProvider({ children }) {
     tacticalAudio.stopPhoneRingtone();
   };
 
+  // User Logout Action
+  const logoutUser = () => {
+    try {
+      localStorage.removeItem('suraksha_user');
+    } catch {}
+    setCurrentUser(null);
+    tacticalAudio.playDisarmChime();
+    logEvent("USER_LOGOUT", "User Session Terminated", "Guardian logged out of tactical console.", "INFO");
+  };
+
   return (
     <SecurityContext.Provider
       value={{
+        currentUser,
+        setCurrentUser,
+        logoutUser,
         activeTab,
         setActiveTab,
         armedState,
@@ -495,7 +637,15 @@ export function SecurityProvider({ children }) {
         shakeSupported,
         shakeCountdown,
         toggleShake,
-        cancelShakeCountdown
+        cancelShakeCountdown,
+        shakeToSosEnabled,
+        setShakeToSosEnabled,
+        recentShakeCount,
+        shakeStatusMessage,
+        simulateShake,
+        simulateFullShakeSequence,
+        motionPermission,
+        requestMotionPermission
       }}
     >
       {children}

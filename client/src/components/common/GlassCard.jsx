@@ -14,18 +14,22 @@ export default function GlassCard({
   const [isHovered, setIsHovered] = useState(false);
 
   const variantStyles = {
-    cyan: "border-cyan-500/25 shadow-[0_4px_28px_rgba(0,0,0,0.5)] hover:border-cyan-400/60 hover:shadow-[0_0_25px_rgba(0,229,255,0.15)]",
-    danger: "border-rose-500/40 shadow-[0_0_30px_rgba(255,23,68,0.2)] bg-rose-950/20 hover:border-rose-400/80 hover:shadow-[0_0_30px_rgba(255,23,68,0.3)]",
-    safe: "border-emerald-500/30 shadow-[0_4px_28px_rgba(0,0,0,0.5)] hover:border-emerald-400/70 hover:shadow-[0_0_25px_rgba(0,230,118,0.15)]",
-    violet: "border-purple-500/30 shadow-[0_4px_28px_rgba(0,0,0,0.5)] hover:border-purple-400/70 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)]"
+    rose: "border-rose-500/20 shadow-[0_4px_28px_rgba(0,0,0,0.45)] hover:border-rose-400/50 hover:shadow-[0_0_25px_rgba(244,63,94,0.15)]",
+    cyan: "border-rose-500/20 shadow-[0_4px_28px_rgba(0,0,0,0.45)] hover:border-rose-400/50 hover:shadow-[0_0_25px_rgba(244,63,94,0.15)]",
+    danger: "border-rose-500/40 shadow-[0_0_30px_rgba(225,29,72,0.2)] bg-rose-950/20 hover:border-rose-400/80 hover:shadow-[0_0_30px_rgba(225,29,72,0.3)]",
+    safe: "border-emerald-500/25 shadow-[0_4px_28px_rgba(0,0,0,0.45)] hover:border-emerald-400/60 hover:shadow-[0_0_25px_rgba(16,185,129,0.15)]",
+    violet: "border-indigo-500/25 shadow-[0_4px_28px_rgba(0,0,0,0.45)] hover:border-indigo-400/60 hover:shadow-[0_0_25px_rgba(129,140,248,0.15)]",
+    amber: "border-amber-500/25 shadow-[0_4px_28px_rgba(0,0,0,0.45)] hover:border-amber-400/60 hover:shadow-[0_0_25px_rgba(245,158,11,0.15)]"
   };
 
   const cornerColor = {
-    cyan: "border-cyan-400",
+    rose: "border-rose-400",
+    cyan: "border-rose-400",
     danger: "border-rose-500",
     safe: "border-emerald-400",
-    violet: "border-purple-400"
-  }[variant] || "border-cyan-400";
+    violet: "border-indigo-400",
+    amber: "border-amber-400"
+  }[variant] || "border-rose-400";
 
   const handleMouseMove = (e) => {
     if (!interactive || !cardRef.current) return;

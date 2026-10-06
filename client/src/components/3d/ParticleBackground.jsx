@@ -15,8 +15,8 @@ export default function ParticleBackground() {
     let height = (canvas.height = window.innerHeight);
 
     const isArmed = armedState === 'ARMED';
-    const primaryColor = isArmed ? 'rgba(255, 23, 68, ' : 'rgba(0, 229, 255, ';
-    const secondaryColor = isArmed ? 'rgba(255, 160, 0, ' : 'rgba(124, 77, 255, ';
+    const primaryColor = isArmed ? 'rgba(225, 29, 72, ' : 'rgba(244, 63, 94, ';
+    const secondaryColor = isArmed ? 'rgba(245, 158, 11, ' : 'rgba(129, 140, 248, ';
 
     const isMobile = width < 768;
     const particleCount = isMobile ? 40 : 85;

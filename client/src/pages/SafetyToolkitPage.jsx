@@ -41,7 +41,7 @@ export default function SafetyToolkitPage() {
     { name: "Women In Distress Helpline", number: "1091", badge: "CRISIS CELL", color: "border-purple-500/50" },
     { name: "Women Helpline (Domestic Abuse)", number: "181", badge: "LEGAL & SHELTER", color: "border-amber-500/50" },
     { name: "National Ambulance Service", number: "108", badge: "EMERGENCY MEDICAL", color: "border-emerald-500/50" },
-    { name: "Cyber Crime Reporting", number: "1930", badge: "CYBER CELL", color: "border-cyan-500/50" },
+    { name: "Cyber Crime Reporting", number: "1930", badge: "CYBER CELL", color: "border-rose-500/50" },
     { name: "Railway Passenger Security", number: "139", badge: "TRANSIT POLICE", color: "border-sky-500/50" }
   ];
 
@@ -81,7 +81,7 @@ export default function SafetyToolkitPage() {
   return (
     <div className="relative min-h-screen pb-28 pt-4 px-4 max-w-6xl mx-auto flex flex-col gap-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rose-500/20 pb-4">
         <div>
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-emerald-400" />
@@ -101,15 +101,15 @@ export default function SafetyToolkitPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Decoy Fake Call Generator */}
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <GlassCard variant="cyan" className="p-6">
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4">
+          <GlassCard variant="rose" className="p-6">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <PhoneCall className="w-4 h-4 text-cyan-400" />
+                <PhoneCall className="w-4 h-4 text-rose-400" />
                 <span className="font-tactical font-bold text-lg text-white">
                   DECOY FAKE CALL GENERATOR
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-cyan-400">ESCAPE TOOL</span>
+              <span className="text-[10px] font-mono text-rose-400">ESCAPE TOOL</span>
             </div>
 
             <p className="text-xs font-mono text-slate-300 leading-relaxed mb-4">
@@ -133,7 +133,7 @@ export default function SafetyToolkitPage() {
                       }}
                       className={`py-1.5 px-2 rounded-lg text-xs font-mono text-center border transition-all cursor-pointer ${
                         callerName === preset
-                          ? 'bg-cyan-500/25 border-cyan-400 text-cyan-300'
+                          ? 'bg-rose-500/25 border-rose-400 text-rose-200'
                           : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
                       }`}
                     >
@@ -152,7 +152,7 @@ export default function SafetyToolkitPage() {
                     type="text"
                     value={callerName}
                     onChange={(e) => setCallerName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white font-mono text-xs focus:outline-none focus:border-cyan-400"
+                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-rose-500/30 text-white font-mono text-xs focus:outline-none focus:border-rose-400"
                   />
                 </div>
 
@@ -163,7 +163,7 @@ export default function SafetyToolkitPage() {
                   <select
                     value={callDelaySec}
                     onChange={(e) => setCallDelaySec(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white font-mono text-xs focus:outline-none focus:border-cyan-400"
+                    className="w-full px-3 py-2 rounded-lg bg-black/50 border border-rose-500/30 text-white font-mono text-xs focus:outline-none focus:border-rose-400"
                   >
                     <option value={0}>Immediate (0s)</option>
                     <option value={5}>In 5 Seconds</option>
@@ -175,7 +175,7 @@ export default function SafetyToolkitPage() {
 
               <div className="pt-2">
                 <TacticalButton
-                  variant="cyan"
+                  variant="rose"
                   size="md"
                   icon={PhoneCall}
                   onClick={handleLaunchFakeCall}
@@ -188,8 +188,8 @@ export default function SafetyToolkitPage() {
           </GlassCard>
 
           {/* Safe Route AI Navigator */}
-          <GlassCard variant="cyan" className="p-6">
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4">
+          <GlassCard variant="rose" className="p-6">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <Navigation className="w-4 h-4 text-emerald-400" />
                 <span className="font-tactical font-bold text-lg text-white">
@@ -264,8 +264,8 @@ export default function SafetyToolkitPage() {
 
         {/* Right Column: Quick-Dial Emergency Array & Flip Cards */}
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <GlassCard variant="cyan" className="p-6">
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4">
+          <GlassCard variant="rose" className="p-6">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <AlertOctagon className="w-4 h-4 text-rose-400" />
                 <span className="font-tactical font-bold text-lg text-white">
@@ -286,7 +286,7 @@ export default function SafetyToolkitPage() {
                     <span className="text-[10px] font-semibold text-slate-400 tracking-wider">
                       {item.badge}
                     </span>
-                    <PhoneForwarded className="w-3.5 h-3.5 text-cyan-400 group-hover:translate-x-0.5 transition-transform" />
+                    <PhoneForwarded className="w-3.5 h-3.5 text-rose-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                   <span className="font-tactical font-bold text-2xl text-white tracking-wider my-0.5">
                     {item.number}
@@ -300,10 +300,10 @@ export default function SafetyToolkitPage() {
           </GlassCard>
 
           {/* Tactical Defense & Threat Matrix Interactive Cards */}
-          <GlassCard variant="cyan" className="p-6">
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4">
+          <GlassCard variant="rose" className="p-6">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
+                <Sparkles className="w-4 h-4 text-rose-400" />
                 <span className="font-tactical font-bold text-lg text-white">
                   SITUATIONAL DE-ESCALATION PROTOCOLS
                 </span>
@@ -313,9 +313,9 @@ export default function SafetyToolkitPage() {
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-black/40 border border-cyan-500/20 flex flex-col gap-3">
+            <div className="p-4 rounded-xl bg-black/40 border border-rose-500/20 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase">
+                <span className="text-[10px] font-mono text-rose-400 tracking-widest uppercase">
                   {safetyTips[activeTipIdx].category}
                 </span>
               </div>
@@ -335,7 +335,7 @@ export default function SafetyToolkitPage() {
                     prev === 0 ? safetyTips.length - 1 : prev - 1
                   )
                 }
-                className="text-xs font-mono text-cyan-400 hover:text-white cursor-pointer"
+                className="text-xs font-mono text-rose-400 hover:text-white cursor-pointer"
               >
                 ← PREVIOUS PROTOCOL
               </button>
@@ -343,7 +343,7 @@ export default function SafetyToolkitPage() {
                 onClick={() =>
                   setActiveTipIdx((prev) => (prev + 1) % safetyTips.length)
                 }
-                className="text-xs font-mono text-cyan-400 hover:text-white cursor-pointer"
+                className="text-xs font-mono text-rose-400 hover:text-white cursor-pointer"
               >
                 NEXT PROTOCOL →
               </button>

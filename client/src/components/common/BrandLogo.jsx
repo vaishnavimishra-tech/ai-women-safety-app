@@ -8,7 +8,7 @@ export default function BrandLogo({ className = "", isArmed = false }) {
         className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 border ${
           isArmed
             ? 'bg-rose-500/15 border-rose-500 text-rose-400'
-            : 'bg-white/5 border-cyan-500/30 text-cyan-400 hover:border-cyan-400'
+            : 'bg-white/5 border-rose-500/30 text-rose-400 hover:border-rose-400'
         }`}
       >
         <svg
@@ -27,7 +27,7 @@ export default function BrandLogo({ className = "", isArmed = false }) {
         {/* Live center pulse dot */}
         <span
           className={`absolute w-1.5 h-1.5 rounded-full ${
-            isArmed ? 'bg-rose-500 animate-ping' : 'bg-cyan-400'
+            isArmed ? 'bg-rose-500 animate-ping' : 'bg-rose-400'
           }`}
         />
       </div>

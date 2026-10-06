@@ -72,6 +72,27 @@ class TacticalAudioEngine {
     } catch {}
   }
 
+  // Progressive tone for Shake-to-SOS (Shake 1: 520Hz, Shake 2: 740Hz, Shake 3: 960Hz alert)
+  playShakeTone(count = 1) {
+    if (this.isMuted) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = count >= 3 ? 'sawtooth' : 'sine';
+      const freq = count === 1 ? 520 : count === 2 ? 740 : 960;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.25, this.ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(count >= 3 ? 0.28 : 0.18, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.14);
+    } catch {}
+  }
+
   // Tactical arming tension ramp (played while holding SOS)
   playArmCountdown(progress = 0) {
     if (this.isMuted) return;
