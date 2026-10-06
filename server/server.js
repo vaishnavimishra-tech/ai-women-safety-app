@@ -10,6 +10,9 @@ const Contact = require("./models/contact");
 
 const app = express();
 
+const cors = require("cors");
+app.use(cors());
+
 const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
