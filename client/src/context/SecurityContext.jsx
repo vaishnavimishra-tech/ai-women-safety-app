@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { tacticalAudio } from '../services/audioService';
 import { geoService, DEFAULT_TACTICAL_COORDS } from '../services/geolocationService';
-import { addContact } from '../services/api';
+import { addContact, triggerSOSRequest } from '../services/api';
+import { shakeService } from '../services/shakeService';
 
 const SecurityContext = createContext(null);
 
@@ -124,6 +125,18 @@ export function SecurityProvider({ children }) {
   // Hotword state
   const [isHotwordListening, setIsHotwordListening] = useState(false);
 
+  // Result of the last SOS dispatch (shown as a banner: sent / no contacts / failed)
+  const [sosNotice, setSosNotice] = useState(null);
+
+  // Shake-to-SOS: setting persisted in localStorage, 5s cancel window before sending
+  const [shakeEnabled, setShakeEnabled] = useState(() => {
+    try { return localStorage.getItem('suraksha_shake_enabled') === 'true'; } catch { return false; }
+  });
+  const [shakeSupported] = useState(() => shakeService.isSupported());
+  const [shakeCountdown, setShakeCountdown] = useState(null);
+  const shakeTimerRef = useRef(null);
+  const armSosRef = useRef(null);
+
   // Fake Call trigger modal state
   const [fakeCallActive, setFakeCallActive] = useState(false);
   const [fakeCaller, setFakeCaller] = useState({ name: "Mom", number: "+91 98765 00001" });
@@ -199,53 +212,132 @@ export function SecurityProvider({ children }) {
   };
 
   // SOS ARMING
-  const armSos = async(triggerSource = "MANUAL_HOLD") => {
+  // Single entry point for every trigger (button, shake, voice).
+  // Flow: siren + vibration -> POST /api/sos (backend sends SMS to all contacts,
+  // saves alert history) -> show result to the user -> write audit log.
+  const armSos = async (triggerSource = "MANUAL_HOLD") => {
+    if (armedState === 'ARMED') return; // ignore duplicate triggers while SOS is active
+
     setArmedState('ARMED');
     setDefconLevel(1);
     tacticalAudio.startSosSiren();
 
-    // Trigger haptic vibration if supported
     if (typeof window !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([300, 100, 300, 100, 500]);
     }
-        try {
-      const userId = JSON.parse(localStorage.getItem('suraksha_user'))?.id;
 
-      if (!userId) {
-        throw new Error("User ID not found. Please log in first.");
-      }
+    const { latitude, longitude, isReal } = telemetry;
+    const coordText = `[${latitude.toFixed(4)}, ${longitude.toFixed(4)}]`;
+    let notice;
 
-      const response = await fetch('http://127.0.0.1:5000/api/sos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          latitude: telemetry.latitude,
-          longitude: telemetry.longitude,
-        }),
-      });
+    try {
+      const result = await triggerSOSRequest({ latitude, longitude, triggerSource });
+      const demo = result.mode === 'demo';
+      const partial = result.contactsNotified < result.contactsTotal;
 
-      const data = await response.json();
+      notice = {
+        type: partial ? 'warning' : 'success',
+        message: demo
+          ? `SOS processed in DEMO mode for ${result.contactsNotified} contact(s). No real SMS was sent.`
+          : `SOS SMS delivered to ${result.contactsNotified} of ${result.contactsTotal} contact(s).`
+      };
 
-      if (!response.ok) {
-        throw new Error(data.message || "SOS request failed");
-      }
-
-      console.log("🚨 SOS backend response:", data);
-
+      logEvent(
+        "SOS_EMERGENCY_ARMED",
+        "CRITICAL: EMERGENCY SOS BROADCAST TRIGGERED",
+        `Source: ${triggerSource}. Coordinates ${coordText}${isReal ? '' : ' (GPS not locked - default position)'}. ` +
+        `SMS ${demo ? 'simulated' : 'sent'} to ${result.contactsNotified}/${result.contactsTotal} contacts.`,
+        "CRITICAL"
+      );
     } catch (error) {
-      console.error("❌ SOS backend error:", error);
+      console.error("SOS backend error:", error);
+
+      notice = {
+        type: 'error',
+        message: error.code === 'NO_CONTACTS'
+          ? "No emergency contacts saved. Add at least one guardian so SOS alerts can reach someone. Call 112 now if you are in danger."
+          : `SOS alert could not be delivered: ${error.message}. Call 112 now if you are in danger.`
+      };
+
+      logEvent(
+        "SOS_DISPATCH_FAILED",
+        error.code === 'NO_CONTACTS' ? "SOS Raised - No Contacts Saved" : "SOS Dispatch Failed",
+        `Source: ${triggerSource}. ${error.message}`,
+        "CRITICAL"
+      );
     }
 
-    logEvent(
-      "SOS_EMERGENCY_ARMED",
-      "CRITICAL: EMERGENCY SOS BROADCAST TRIGGERED",
-      `Source: ${triggerSource}. Tactical Coordinates: [${telemetry.latitude.toFixed(4)}, ${telemetry.longitude.toFixed(4)}]. Automated Police (112) and Guardian packet dispatched.`,
-      "CRITICAL"
-    );
+    setSosNotice(notice);
   };
+
+  const dismissSosNotice = () => setSosNotice(null);
+
+  // ---- Shake trigger ----
+  const cancelShakeCountdown = () => {
+    if (shakeTimerRef.current) {
+      clearInterval(shakeTimerRef.current);
+      shakeTimerRef.current = null;
+    }
+    setShakeCountdown(null);
+  };
+
+  // 3 shakes detected -> 5 second cancel window (guards against accidental shakes) -> SOS
+  const handleShakeDetected = () => {
+    if (shakeTimerRef.current) return;
+    tacticalAudio.playHotwordTrigger();
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    logEvent("SHAKE_TRIGGER_DETECTED", "Emergency Shake Detected",
+      "3 rapid shakes registered. SOS will dispatch in 5s unless cancelled.", "CRITICAL");
+
+    let left = 5;
+    setShakeCountdown(left);
+    shakeTimerRef.current = setInterval(() => {
+      left -= 1;
+      if (left <= 0) {
+        cancelShakeCountdown();
+        armSosRef.current?.("SHAKE_TRIGGER");
+      } else {
+        setShakeCountdown(left);
+      }
+    }, 1000);
+  };
+
+  // Turn shake detection on/off. Must be called from a click (iOS permission).
+  const toggleShake = async () => {
+    if (shakeEnabled) {
+      shakeService.stop();
+      setShakeEnabled(false);
+      try { localStorage.setItem('suraksha_shake_enabled', 'false'); } catch {}
+      return { ok: true };
+    }
+    if (!shakeService.isSupported()) {
+      return { ok: false, error: "Motion sensor not available on this device/browser." };
+    }
+    const granted = await shakeService.requestPermission();
+    if (!granted) {
+      return { ok: false, error: "Motion permission denied." };
+    }
+    shakeService.start(handleShakeDetected);
+    setShakeEnabled(true);
+    try { localStorage.setItem('suraksha_shake_enabled', 'true'); } catch {}
+    return { ok: true };
+  };
+
+  // Always point the shake timer at the latest armSos
+  armSosRef.current = armSos;
+
+  // Re-start shake detection after a page reload (works directly on Android;
+  // iOS needs the user to re-enable it with a tap because of the permission rule)
+  useEffect(() => {
+    if (shakeEnabled && shakeSupported && !shakeService.needsPermission()) {
+      shakeService.start(handleShakeDetected);
+    }
+    return () => {
+      shakeService.stop();
+      if (shakeTimerRef.current) clearInterval(shakeTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // SOS DISARM
   const disarmSos = (enteredPin) => {
@@ -396,7 +488,14 @@ export function SecurityProvider({ children }) {
         fakeCallActive,
         fakeCaller,
         triggerFakeCall,
-        dismissFakeCall
+        dismissFakeCall,
+        sosNotice,
+        dismissSosNotice,
+        shakeEnabled,
+        shakeSupported,
+        shakeCountdown,
+        toggleShake,
+        cancelShakeCountdown
       }}
     >
       {children}

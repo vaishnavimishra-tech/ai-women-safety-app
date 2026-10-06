@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getContacts, addContact } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -29,6 +30,32 @@ export default function GuardianNetworkPage() {
     pingGuardian,
     telemetry
   } = useSecurity();
+  const [mongoContacts, setMongoContacts] = useState([]);
+
+  useEffect(() => {
+  console.log("GUARDIAN PAGE: useEffect is running");
+
+  const savedUser = localStorage.getItem('suraksha_user');
+
+  if (!savedUser) return;
+
+  const user = JSON.parse(savedUser);
+
+  if (!user.id) return;
+
+  const loadContacts = async () => {
+    try {
+      const data = await getContacts(user.id);
+      console.log("CONTACTS FROM MONGODB:", data);
+      console.log("CONTACTS ARRAY:", data.contacts);
+      setMongoContacts(data || []);
+    } catch (error) {
+      console.error("Failed to load emergency contacts:", error);
+    }
+  };
+
+  loadContacts();
+}, []);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newGuardian, setNewGuardian] = useState({
@@ -38,13 +65,45 @@ export default function GuardianNetworkPage() {
   });
   const [pingSuccessId, setPingSuccessId] = useState(null);
 
-  const handleAdd = (e) => {
-    e.preventDefault();
-    if (!newGuardian.name || !newGuardian.phone) return;
-    addGuardian(newGuardian);
-    setNewGuardian({ name: '', relation: '', phone: '' });
+
+  const handleAdd = async (e) => {
+  e.preventDefault();
+
+  if (!newGuardian.name || !newGuardian.phone) return;
+
+  try {
+    const savedUser = localStorage.getItem('suraksha_user');
+
+    if (!savedUser) {
+      alert("Please login again.");
+      return;
+    }
+
+    const user = JSON.parse(savedUser);
+
+    const contact = await addContact(
+      user.id,
+      newGuardian.name,
+      newGuardian.phone,
+      newGuardian.relation
+    );
+
+    setMongoContacts((prev) => [...prev, contact]);
+
+    setNewGuardian({
+      name: '',
+      relation: '',
+      phone: ''
+    });
+
     setShowAddModal(false);
-  };
+
+    console.log("CONTACT SAVED TO MONGODB:", contact);
+  } catch (error) {
+    console.error("Failed to save contact:", error);
+    alert(error.message);
+  }
+};
 
   const handlePing = (id) => {
     pingGuardian(id);
@@ -200,14 +259,14 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
         <div className="lg:col-span-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase tracking-widest text-slate-400">
-              REGISTERED EMERGENCY GUARDIANS ({guardians.length})
+              REGISTERED EMERGENCY GUARDIANS ({mongoContacts.length})
             </span>
           </div>
 
           <div className="space-y-3">
-            {guardians.map((guardian) => (
+            {mongoContacts.map((guardian) => (
               <GlassCard
-                key={guardian.id}
+                key={guardian._id}
                 variant="violet"
                 className="p-5 flex flex-col gap-3 relative"
               >
@@ -228,7 +287,7 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                         )}
                       </div>
                       <span className="text-xs font-mono text-slate-400">
-                        {guardian.relation} • {guardian.phone}
+                        {guardian.relationship} • {guardian.phone}
                       </span>
                     </div>
                   </div>

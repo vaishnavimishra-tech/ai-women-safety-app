@@ -3,28 +3,21 @@ require("dotenv").config();
 const User = require("./models/user");
 const Contact = require("./models/contact");
 const LocationHistory = require("./models/locationHistory");
+const SosAlert = require("./models/sosAlert");
+const { broadcastSms, buildSosMessage, isDemoMode } = require("./services/smsService");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
-const twilio = require("twilio");
 
 
 const app = express();
-
-const twilioClient = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-);
 
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 
-//commit
-app.use(express.json());
-
 console.log("MONGO_URI loaded:", !!process.env.MONGO_URI);
-console.log("Twilio account loaded:", !!process.env.TWILIO_ACCOUNT_SID);
+console.log("SMS mode:", isDemoMode() ? "DEMO (no real SMS)" : "LIVE (Twilio)");
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
@@ -277,76 +270,120 @@ app.get("/api/location/history/:userId", async (req, res) => {
 });
 
 // POST /api/sos
-// Processes an SOS request after validating the user and location.
-
+// SOS flow (viva walk-through):
+//   1. Frontend (SOS button / shake / voice) sends { userId, latitude, longitude, triggerSource }
+//   2. Validate input + check the user exists
+//   3. Fetch the user's saved emergency contacts from MongoDB
+//   4. No contacts -> save a "no_contacts" alert and tell the user to add some
+//   5. Build the SOS message (User + Coordinates + Google Maps link)
+//   6. Send SMS to ALL contacts in parallel through Twilio
+//   7. Save alert history (timestamp, per-contact delivery result) in MongoDB
+//   8. Respond with how many contacts were actually notified
 app.post("/api/sos", async (req, res) => {
     try {
-        const { userId, latitude, longitude } = req.body;
+        const { userId, triggerSource = "MANUAL" } = req.body;
+        const latitude = Number(req.body.latitude);
+        const longitude = Number(req.body.longitude);
 
-        // Check required data
-        if (!userId || latitude === undefined || longitude === undefined) {
-            return res.status(400).json({
-                message: "User ID and location are required"
-            });
+        // 2. Validate
+        if (!userId || !mongoose.isValidObjectId(userId)) {
+            return res.status(400).json({ message: "A valid user ID is required" });
+        }
+        if (
+            !Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+            latitude < -90 || latitude > 90 ||
+            longitude < -180 || longitude > 180
+        ) {
+            return res.status(400).json({ message: "Valid latitude and longitude are required" });
         }
 
-        // Find the user
         const user = await User.findById(userId);
-
         if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
+            return res.status(404).json({ message: "User not found" });
         }
 
-        // Find emergency contacts
+        const mapsLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+
+        // 3. Fetch contacts dynamically
         const contacts = await Contact.find({ userId });
 
+        // 4. Edge case: no contacts saved
         if (contacts.length === 0) {
+            await SosAlert.create({
+                userId, latitude, longitude, mapsLink, triggerSource,
+                status: "no_contacts", contactsTotal: 0, contactsNotified: 0, deliveries: []
+            });
             return res.status(404).json({
-                message: "No emergency contacts found"
+                code: "NO_CONTACTS",
+                message: "No emergency contacts saved. Please add at least one contact so SOS alerts can be delivered."
             });
         }
 
-        // Create Google Maps location link
-        const locationLink =
-            `https://maps.google.com/?q=${latitude},${longitude}`;
+        // 5 + 6. Build message and dispatch to every contact
+        const body = buildSosMessage({ userName: user.name, latitude, longitude, mapsLink });
+        const deliveries = await broadcastSms(contacts, body);
 
-        // Demo Mode - SMS disabled because Twilio trial has expired
-        console.log("SOS received successfully!");
-        console.log(`Emergency contacts found: ${contacts.length}`);
+        const notified = deliveries.filter((d) => d.status === "sent" || d.status === "demo").length;
+        const demo = deliveries.some((d) => d.status === "demo");
+        const status =
+            notified === 0 ? "failed" :
+            demo ? "demo" :
+            notified === deliveries.length ? "sent" : "partial";
 
-        for (const contact of contacts) {
-            console.log(`Demo SOS notification for: ${contact.name} - ${contact.phone}`);
+        // 7. Alert history
+        const alert = await SosAlert.create({
+            userId, latitude, longitude, mapsLink, triggerSource, status,
+            contactsTotal: contacts.length,
+            contactsNotified: notified,
+            deliveries
+        });
+
+        // 8. Respond
+        if (notified === 0) {
+            return res.status(502).json({
+                code: "SMS_FAILED",
+                message: "SOS was recorded but no SMS could be delivered. Check phone numbers / SMS gateway.",
+                alertId: alert._id,
+                deliveries
+            });
         }
 
-        console.log("SMS sending skipped - Demo Mode");
-
-        // Send response after SMS is sent
         res.status(200).json({
-            message: "SOS alert sent successfully",
-            location: {
-                latitude,
-                longitude
-            },
-            contactsNotified: contacts.length
+            message: demo
+                ? "SOS processed in DEMO mode (no real SMS sent)"
+                : "SOS alert sent successfully",
+            alertId: alert._id,
+            status,
+            mode: demo ? "demo" : "live",
+            location: { latitude, longitude, mapsLink },
+            contactsTotal: contacts.length,
+            contactsNotified: notified,
+            deliveries
         });
-
     } catch (error) {
         console.log("SOS error:", error);
+        res.status(500).json({ message: "Failed to send SOS alert" });
+    }
+});
 
-        res.status(500).json({
-            message: "Failed to send SOS alert"
-        });
+// GET /api/sos/history/:userId
+// Returns the user's past SOS alerts (newest first) with timestamps.
+app.get("/api/sos/history/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!mongoose.isValidObjectId(userId)) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+        const alerts = await SosAlert.find({ userId }).sort({ timestamp: -1 }).limit(50);
+        res.status(200).json({ message: "SOS history fetched successfully", alerts });
+    } catch (error) {
+        console.log("SOS history error:", error);
+        res.status(500).json({ message: "Server error" });
     }
 });
 
 // Start server
-app.listen(5000, () => {
-    console.log("Server running on http://127.0.0.1:5000");
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server running on http://127.0.0.1:${PORT}`);
 });
-
-
-
-
-
