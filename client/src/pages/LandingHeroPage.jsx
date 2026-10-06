@@ -37,42 +37,42 @@ export default function LandingHeroPage() {
   const isArmed = armedState === 'ARMED';
 
   const telemetryStats = [
-    { label: "DISPATCH LATENCY", value: "1.2", unit: "SEC", variant: "cyan" },
-    { label: "ENCRYPTION CIPHER", value: "AES-256", unit: "GCM", variant: "green" },
-    { label: "GUARDIAN MESH", value: `${guardians.length}`, unit: "ACTIVE", variant: "cyan" },
-    { label: "STATUS MODE", value: isArmed ? "ALERT" : "NOMINAL", unit: "", variant: isArmed ? "red" : "green" }
+    { label: "DISPATCH LATENCY", value: "1.2", unit: "SEC", variant: "rose" },
+    { label: "SHAKE DETECTION", value: "3X SHAKE", unit: "ACTIVE", variant: "rose" },
+    { label: "GUARDIAN MESH", value: `${guardians.length}`, unit: "CONNECTED", variant: "lavender" },
+    { label: "PROTECTION STATE", value: isArmed ? "ALERT" : "SAFE", unit: "", variant: isArmed ? "red" : "green" }
   ];
 
   const howItWorksSteps = [
     {
       step: "01",
-      title: "Arm",
-      subtitle: "Instant Actuation",
-      desc: "Trigger via a 2.2-second tactile press-and-hold or zero-touch acoustic hotwords ('HELP', 'SURAKSHA') via Web Speech API.",
+      title: "Activate",
+      subtitle: "Hold or 3x Shake",
+      desc: "Trigger emergency dispatch by vigorously shaking your phone 3 times, a 2.2-second press-and-hold, or hands-free voice hotwords.",
       icon: ShieldAlert,
       color: "text-rose-400 border-rose-500/30 bg-rose-950/20"
     },
     {
       step: "02",
-      title: "Broadcast",
+      title: "Sound & Signal",
       subtitle: "Local Audio & GPS",
       desc: "Synthesizes high-decibel audible emergency sirens through the Web Audio API and generates real-time GPS coordinate packets.",
       icon: Bell,
-      color: "text-cyan-400 border-cyan-500/30 bg-cyan-950/20"
+      color: "text-amber-400 border-amber-500/30 bg-amber-950/20"
     },
     {
       step: "03",
-      title: "Notify",
+      title: "Connect",
       subtitle: "Offline Guardian Relay",
       desc: "Generates direct SMS & WhatsApp emergency dispatch packets with live coordinates for your trusted mesh contacts.",
       icon: Users,
-      color: "text-purple-400 border-purple-500/30 bg-purple-950/20"
+      color: "text-indigo-400 border-indigo-500/30 bg-indigo-950/20"
     },
     {
       step: "04",
-      title: "Track",
+      title: "Navigate",
       subtitle: "Safe Haven Guidance",
-      desc: "Engages continuous 360° sonar radar sweep, mapping nearby 24/7 police booths and high-illumination safe corridors.",
+      desc: "Engages continuous 360° radar sweep, mapping nearby 24/7 police booths and high-illumination safe corridors.",
       icon: Navigation,
       color: "text-emerald-400 border-emerald-500/30 bg-emerald-950/20"
     }
@@ -95,7 +95,7 @@ export default function LandingHeroPage() {
       desc: "Continuous 360° rotating radar sweep mapping nearby 24/7 police booths, pink patrols, and high-illumination safe havens.",
       icon: Radar,
       badge: "LIVE TELEMETRY",
-      color: "cyan"
+      color: "rose"
     },
     {
       id: "network",
@@ -113,7 +113,7 @@ export default function LandingHeroPage() {
       desc: "Zero-touch voice detection listening for trigger phrases ('HELP', 'SURAKSHA', 'BACHAO') with real-time decibel analysis.",
       icon: Mic,
       badge: "NEURAL LISTEN",
-      color: "cyan"
+      color: "rose"
     },
     {
       id: "toolkit",
@@ -131,7 +131,7 @@ export default function LandingHeroPage() {
       desc: "Immutable incident log feed with simulated SHA-256 cryptographic hashes and exportable formal police documentation.",
       icon: Activity,
       badge: "ENCRYPTED LOGS",
-      color: "cyan"
+      color: "rose"
     }
   ];
 
@@ -175,7 +175,7 @@ export default function LandingHeroPage() {
       <div className="fixed top-0 right-0 h-full w-[3px] bg-white/5 pointer-events-none z-50">
         <motion.div
           style={{ scaleY: scrollYProgress }}
-          className="w-full h-full origin-top bg-gradient-to-b from-cyan-400 via-sky-300 to-indigo-500 shadow-[0_0_12px_#00e5ff]"
+          className="w-full h-full origin-top bg-gradient-to-b from-rose-400 via-rose-300 to-indigo-400 shadow-[0_0_12px_rgba(244,63,94,0.6)]"
         />
       </div>
 
@@ -184,9 +184,9 @@ export default function LandingHeroPage() {
         {/* Left Hero Briefing */}
         <div className="flex-1 flex flex-col gap-5 z-10 text-left">
           {/* Badge: Grounded & Professional */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-950/40 border border-cyan-500/30 w-fit">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span className="text-xs font-mono font-semibold tracking-widest text-cyan-300 uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-950/40 border border-rose-500/30 w-fit">
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+            <span className="text-xs font-mono font-semibold tracking-widest text-rose-300 uppercase">
               AI-POWERED PERSONAL SAFETY
             </span>
           </div>
@@ -194,7 +194,7 @@ export default function LandingHeroPage() {
           {/* Headline: Solid clean accent */}
           <h1 className="font-sans font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-white leading-none">
             UNCOMPROMISED <br />
-            <span className="text-cyan-400">
+            <span className="text-rose-400">
               PROTECTION.
             </span>
             <br />
@@ -234,8 +234,8 @@ export default function LandingHeroPage() {
             </TacticalButton>
           </div>
 
-          {/* Live Telemetry Readout Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 border-t border-cyan-500/20">
+          {/* Telemetry Quick Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 border-t border-rose-500/20">
             {telemetryStats.map((stat, i) => (
               <TelemetryText
                 key={i}
@@ -248,7 +248,7 @@ export default function LandingHeroPage() {
           </div>
         </div>
 
-        {/* Right: Scroll-Choreographed 3D Holographic Tactical Shield Canvas */}
+        {/* Right Centerpiece: High-Production 3D Shield Canvas */}
         <motion.div
           style={{
             scale: hero3dScale,
@@ -256,7 +256,7 @@ export default function LandingHeroPage() {
             y: hero3dY,
             rotate: hero3dRotate
           }}
-          className="flex-1 w-full h-[280px] sm:h-[360px] lg:h-[440px] max-h-[50vh] relative flex items-center justify-center overflow-hidden rounded-2xl bg-black/20 border border-cyan-500/10 shadow-2xl"
+          className="flex-1 w-full h-[280px] sm:h-[360px] lg:h-[440px] max-h-[50vh] relative flex items-center justify-center pointer-events-auto"
         >
           <TacticalShieldCanvas className="w-full h-full" />
         </motion.div>
@@ -264,9 +264,9 @@ export default function LandingHeroPage() {
 
       {/* 2. HOW IT WORKS / 4-STEP STAGGERED REVEAL */}
       <section id="how-it-works" className="flex flex-col gap-8 scroll-mt-20">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-cyan-500/20 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-rose-500/20 pb-4">
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">
+            <span className="text-xs font-mono uppercase tracking-widest text-rose-400">
               OPERATIONAL PROTOCOL
             </span>
             <h2 className="font-tactical font-bold text-3xl md:text-4xl text-white tracking-wide mt-1">
@@ -290,7 +290,7 @@ export default function LandingHeroPage() {
             return (
               <motion.div key={idx} variants={cardRevealVariants} className="h-full">
                 <GlassCard
-                  variant="cyan"
+                  variant="rose"
                   className="p-5 flex flex-col justify-between relative group h-full"
                 >
                   <div>
@@ -298,7 +298,7 @@ export default function LandingHeroPage() {
                       <div className={`p-2.5 rounded-lg border ${s.color}`}>
                         <Icon className="w-5 h-5" />
                       </div>
-                      <span className="font-mono text-lg font-bold text-slate-500 group-hover:text-cyan-400 transition-colors">
+                      <span className="font-mono text-lg font-bold text-slate-500 group-hover:text-rose-400 transition-colors">
                         {s.step}
                       </span>
                     </div>
@@ -306,7 +306,7 @@ export default function LandingHeroPage() {
                     <h3 className="font-tactical font-bold text-xl text-white mb-0.5">
                       {s.title}
                     </h3>
-                    <span className="text-[11px] font-mono text-cyan-400 block mb-2 font-semibold">
+                    <span className="text-[11px] font-mono text-rose-400 block mb-2 font-semibold">
                       {s.subtitle}
                     </span>
                     <p className="text-xs text-slate-300 leading-relaxed font-sans">
@@ -327,9 +327,9 @@ export default function LandingHeroPage() {
 
       {/* 3. COMMAND MATRIX CAPABILITIES / STAGGERED REVEAL */}
       <section className="flex flex-col gap-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-cyan-500/20 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-rose-500/20 pb-4">
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">
+            <span className="text-xs font-mono uppercase tracking-widest text-rose-400">
               CONSOLE SUBSYSTEMS
             </span>
             <h2 className="font-tactical font-bold text-3xl md:text-4xl text-white tracking-wide mt-1">
@@ -364,15 +364,15 @@ export default function LandingHeroPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 group-hover:border-cyan-400/50 transition-colors">
-                        <Icon className="w-5 h-5 text-cyan-300 group-hover:text-cyan-200" />
+                      <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 group-hover:border-rose-400/50 transition-colors">
+                        <Icon className="w-5 h-5 text-rose-300 group-hover:text-rose-200" />
                       </div>
                       <span className="text-[10px] font-mono tracking-widest text-slate-400 px-2 py-0.5 rounded bg-black/40 border border-white/5">
                         {module.code}
                       </span>
                     </div>
 
-                    <h3 className="font-tactical font-bold text-xl text-white mb-2 tracking-wide group-hover:text-cyan-300 transition-colors">
+                    <h3 className="font-tactical font-bold text-xl text-white mb-2 tracking-wide group-hover:text-rose-300 transition-colors">
                       {module.title}
                     </h3>
                     <p className="text-xs text-slate-300/90 leading-relaxed font-sans">
@@ -380,7 +380,7 @@ export default function LandingHeroPage() {
                     </p>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono text-cyan-400">
+                  <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono text-rose-400">
                     <span className="text-[10px] tracking-widest text-slate-400">
                       {module.badge}
                     </span>
@@ -402,9 +402,9 @@ export default function LandingHeroPage() {
         whileInView={{ opacity: 1, y: 0, scale: 1 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="rounded-2xl bg-gradient-to-r from-[#0b1020] via-[#091522] to-[#0b1020] border border-cyan-500/25 p-8 md:p-12 relative overflow-hidden shadow-2xl"
+        className="rounded-2xl bg-gradient-to-r from-[#140b10] via-[#1a0f18] to-[#120b16] border border-rose-500/25 p-8 md:p-12 relative overflow-hidden shadow-2xl"
       >
-        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="space-y-4 max-w-2xl">
             <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export default function LandingHeroPage() {
           <div className="shrink-0 flex flex-col sm:flex-row gap-4">
             <TacticalButton
               size="lg"
-              variant="cyan"
+              variant="rose"
               icon={Compass}
               onClick={() => {
                 setActiveTab('toolkit');

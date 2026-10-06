@@ -10,18 +10,18 @@ function MobileShieldFallback({ isArmed }) {
       {/* Concentric pulsing rings */}
       <div
         className={`absolute w-52 h-52 rounded-full border-2 transition-colors duration-500 animate-pulse ${
-          isArmed ? 'border-rose-500/40 bg-rose-950/20' : 'border-cyan-400/30 bg-cyan-950/20'
+          isArmed ? 'border-rose-500/50 bg-rose-950/30' : 'border-rose-400/30 bg-rose-950/15'
         }`}
       />
       <div
         className={`absolute w-40 h-40 rounded-full border border-dashed animate-spin ${
-          isArmed ? 'border-rose-400/50' : 'border-cyan-300/40'
+          isArmed ? 'border-rose-400/60' : 'border-indigo-300/40'
         }`}
         style={{ animationDuration: '14s' }}
       />
       <div
         className={`absolute w-28 h-28 rounded-full border ${
-          isArmed ? 'border-rose-500/60' : 'border-purple-400/40'
+          isArmed ? 'border-rose-500/70' : 'border-rose-400/40'
         } animate-ping`}
         style={{ animationDuration: '3s' }}
       />
@@ -30,8 +30,8 @@ function MobileShieldFallback({ isArmed }) {
       <div
         className={`relative w-20 h-20 rounded-2xl flex items-center justify-center border shadow-2xl transition-all ${
           isArmed
-            ? 'bg-rose-600/30 border-rose-400 shadow-[0_0_30px_rgba(255,23,68,0.6)] text-rose-300'
-            : 'bg-cyan-500/20 border-cyan-300 shadow-[0_0_30px_rgba(0,229,255,0.5)] text-cyan-300'
+            ? 'bg-rose-600/30 border-rose-400 shadow-[0_0_30px_rgba(244,63,94,0.6)] text-rose-300'
+            : 'bg-rose-500/20 border-rose-300 shadow-[0_0_30px_rgba(244,63,94,0.45)] text-rose-300'
         }`}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="w-10 h-10">
@@ -40,8 +40,8 @@ function MobileShieldFallback({ isArmed }) {
         </svg>
       </div>
 
-      <div className="absolute bottom-3 text-[9px] font-mono tracking-widest text-cyan-400/60 uppercase">
-        MOBILE PERFORMANCE MODE // ACTIVE
+      <div className="absolute bottom-3 text-[9px] font-mono tracking-widest text-rose-300/70 uppercase">
+        PROTECTIVE SHIELD // ACTIVE
       </div>
     </div>
   );
@@ -84,10 +84,10 @@ export default function TacticalShieldCanvas({ className = "w-full h-full" }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     mount.appendChild(renderer.domElement);
 
-    // Color definitions
-    const primaryColor = isArmed ? 0xff1744 : 0x00e5ff;
-    const secondaryColor = isArmed ? 0xff5252 : 0x7c4dff;
-    const accentColor = isArmed ? 0xffa000 : 0x00e676;
+    // Color definitions (Warm, human-centric protective palette)
+    const primaryColor = isArmed ? 0xe11d48 : 0xf43f5e; // Radiant Sunset Rose
+    const secondaryColor = isArmed ? 0xff2a55 : 0x818cf8; // Serene Lavender / Soft Indigo
+    const accentColor = isArmed ? 0xf59e0b : 0xfbbf24; // Warm Honey Gold
 
     // Master Group (Subject to idle bob & cursor parallax)
     const masterGroup = new THREE.Group();
@@ -142,7 +142,7 @@ export default function TacticalShieldCanvas({ className = "w-full h-full" }) {
     // Deep luminous core center point
     const deepCoreGeo = new THREE.SphereGeometry(0.28, 16, 16);
     const deepCoreMat = new THREE.MeshBasicMaterial({
-      color: isArmed ? 0xff3355 : 0xffffff
+      color: isArmed ? 0xff2a55 : 0xffe4e6
     });
     const deepCore = new THREE.Mesh(deepCoreGeo, deepCoreMat);
     coreGroup.add(deepCore);
@@ -157,7 +157,7 @@ export default function TacticalShieldCanvas({ className = "w-full h-full" }) {
       color: primaryColor,
       metalness: 0.92,
       roughness: 0.1,
-      emissive: isArmed ? 0x660011 : 0x002244,
+      emissive: isArmed ? 0x660011 : 0x441122,
       emissiveIntensity: 0.4
     });
     const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
@@ -170,7 +170,7 @@ export default function TacticalShieldCanvas({ className = "w-full h-full" }) {
       color: secondaryColor,
       metalness: 0.9,
       roughness: 0.1,
-      emissive: 0x220044,
+      emissive: 0x221144,
       emissiveIntensity: 0.35
     });
     const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);

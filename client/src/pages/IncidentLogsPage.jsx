@@ -61,10 +61,10 @@ export default function IncidentLogsPage() {
   return (
     <div className="relative min-h-screen pb-28 pt-4 px-4 max-w-6xl mx-auto flex flex-col gap-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rose-500/20 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-cyan-400" />
+            <FileText className="w-5 h-5 text-rose-400" />
             <h1 className="font-tactical font-bold text-3xl md:text-4xl text-white tracking-wider">
               TAMPER-PROOF AUDIT TRAIL & LOGS
             </h1>
@@ -77,7 +77,7 @@ export default function IncidentLogsPage() {
         <div className="flex items-center gap-3">
           <TacticalButton
             size="sm"
-            variant="cyan"
+            variant="rose"
             icon={Download}
             onClick={handleExport}
           >
@@ -96,7 +96,7 @@ export default function IncidentLogsPage() {
             placeholder="Search events, hashes, or keywords..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white font-mono text-xs focus:outline-none focus:border-cyan-400"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/50 border border-rose-500/30 text-white font-mono text-xs focus:outline-none focus:border-rose-400"
           />
         </div>
 
@@ -110,7 +110,7 @@ export default function IncidentLogsPage() {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider border transition-all cursor-pointer ${
                 severityFilter === sev
-                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                  ? 'bg-rose-500/20 border-rose-400 text-rose-200'
                   : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
               }`}
             >
@@ -136,7 +136,7 @@ export default function IncidentLogsPage() {
                 transition={{ duration: 0.2 }}
               >
                 <GlassCard
-                  variant={isCritical ? 'danger' : isSafe ? 'safe' : 'cyan'}
+                  variant={isCritical ? 'danger' : isSafe ? 'safe' : 'rose'}
                   className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-start gap-3">
@@ -146,7 +146,7 @@ export default function IncidentLogsPage() {
                           ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50 animate-pulse'
                           : isSafe
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                          : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                          : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
                       }`}
                     >
                       {isCritical ? (
@@ -183,7 +183,7 @@ export default function IncidentLogsPage() {
 
                   <div className="shrink-0 flex sm:flex-col items-end gap-1.5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
                     <span className="text-[10px] font-mono text-slate-500">HASH:</span>
-                    <span className="text-xs font-mono text-cyan-400 bg-black/60 px-2 py-0.5 rounded border border-cyan-500/20">
+                    <span className="text-xs font-mono text-rose-300 bg-black/60 px-2 py-0.5 rounded border border-rose-500/20">
                       {log.hash}
                     </span>
                   </div>

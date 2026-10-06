@@ -9,14 +9,14 @@ export default function StatusBadge({
 }) {
   const configs = {
     normal: {
-      dot: "bg-cyan-400",
-      halo: "bg-cyan-400/30",
-      bg: "bg-cyan-950/40 text-cyan-300 border-cyan-500/30"
+      dot: "bg-rose-400",
+      halo: "bg-rose-400/30",
+      bg: "bg-rose-950/40 text-rose-200 border-rose-500/30"
     },
     active: {
-      dot: "bg-cyan-300",
-      halo: "bg-cyan-400/40",
-      bg: "bg-cyan-900/50 text-cyan-200 border-cyan-400/50 shadow-[0_0_10px_rgba(0,229,255,0.2)]"
+      dot: "bg-rose-300",
+      halo: "bg-rose-400/40",
+      bg: "bg-rose-900/50 text-rose-100 border-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
     },
     warning: {
       dot: "bg-amber-400",

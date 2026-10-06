@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getContacts, addContact } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -29,6 +30,25 @@ export default function GuardianNetworkPage() {
     pingGuardian,
     telemetry
   } = useSecurity();
+  const [mongoContacts, setMongoContacts] = useState([]);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('suraksha_user');
+    if (!savedUser) return;
+    try {
+      const user = JSON.parse(savedUser);
+      if (!user.id) return;
+      const loadContacts = async () => {
+        try {
+          const data = await getContacts(user.id);
+          setMongoContacts(data || []);
+        } catch (error) {
+          console.error("Failed to load emergency contacts:", error);
+        }
+      };
+      loadContacts();
+    } catch {}
+  }, []);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newGuardian, setNewGuardian] = useState({
@@ -38,12 +58,32 @@ export default function GuardianNetworkPage() {
   });
   const [pingSuccessId, setPingSuccessId] = useState(null);
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!newGuardian.name || !newGuardian.phone) return;
-    addGuardian(newGuardian);
-    setNewGuardian({ name: '', relation: '', phone: '' });
-    setShowAddModal(false);
+
+    try {
+      const savedUser = localStorage.getItem('suraksha_user');
+      if (!savedUser) {
+        alert("Please login again.");
+        return;
+      }
+      const user = JSON.parse(savedUser);
+
+      const contact = await addContact(
+        user.id,
+        newGuardian.name,
+        newGuardian.phone,
+        newGuardian.relation
+      );
+
+      setMongoContacts((prev) => [...prev, contact]);
+      setNewGuardian({ name: '', relation: '', phone: '' });
+      setShowAddModal(false);
+    } catch (error) {
+      console.error("Failed to save contact:", error);
+      alert(error.message);
+    }
   };
 
   const handlePing = (id) => {
@@ -58,13 +98,15 @@ Current Location: [${telemetry.latitude.toFixed(4)}°N, ${telemetry.longitude.to
 Track Live Beacon: https://suraksha.ai/beacon?id=user-live&lat=${telemetry.latitude}&lng=${telemetry.longitude}
 Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
 
+  const activeContactsList = mongoContacts.length > 0 ? mongoContacts : guardians;
+
   return (
     <div className="relative min-h-screen pb-28 pt-4 px-4 max-w-6xl mx-auto flex flex-col gap-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rose-500/20 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-purple-400" />
+            <Users className="w-5 h-5 text-indigo-400" />
             <h1 className="font-tactical font-bold text-3xl md:text-4xl text-white tracking-wider">
               GUARDIAN MESH & ORBITAL GRAPH
             </h1>
@@ -77,14 +119,14 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
         <div className="flex items-center gap-3">
           <TacticalButton
             size="sm"
-            variant="cyan"
+            variant="rose"
             icon={UserPlus}
             onClick={() => setShowAddModal(true)}
           >
             ENROLL GUARDIAN
           </TacticalButton>
           <StatusBadge
-            label={`${guardians.length} NODES ACTIVE`}
+            label={`${activeContactsList.length} NODES ACTIVE`}
             status="safe"
             pulse={true}
           />
@@ -96,7 +138,7 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
         {/* Left: SVG Orbital Network Graph Visualizer */}
         <div className="lg:col-span-6 flex flex-col items-center">
           <GlassCard variant="violet" className="w-full p-6 flex flex-col items-center relative overflow-hidden">
-            <div className="w-full flex items-center justify-between mb-2 text-xs font-mono text-purple-300">
+            <div className="w-full flex items-center justify-between mb-2 text-xs font-mono text-indigo-300">
               <span>CYBERNETIC MESH TOPOLOGY</span>
               <span>256-BIT SYNC</span>
             </div>
@@ -104,31 +146,31 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
             {/* Orbital Canvas SVG */}
             <div className="relative w-[320px] h-[320px] sm:w-[360px] sm:h-[360px] flex items-center justify-center my-4">
               {/* Outer dashed orbit rings */}
-              <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-purple-500/25 pointer-events-none" />
-              <div className="absolute w-[200px] h-[200px] rounded-full border border-purple-500/20 pointer-events-none" />
+              <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-indigo-500/25 pointer-events-none" />
+              <div className="absolute w-[200px] h-[200px] rounded-full border border-indigo-500/20 pointer-events-none" />
 
               {/* Dynamic SVG connecting lines */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                {guardians.map((g, idx) => {
-                  const total = guardians.length || 1;
+                {activeContactsList.map((g, idx) => {
+                  const total = activeContactsList.length || 1;
                   const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
                   const cx = 180;
                   const cy = 180;
                   const x = cx + Math.cos(angle) * 120;
                   const y = cy + Math.sin(angle) * 120;
                   return (
-                    <g key={g.id}>
+                    <g key={g._id || g.id}>
                       <line
                         x1={cx}
                         y1={cy}
                         x2={x}
                         y2={y}
-                        stroke="rgba(168, 85, 247, 0.4)"
+                        stroke="rgba(129, 140, 248, 0.4)"
                         strokeWidth="1.5"
                         strokeDasharray="4 4"
                       />
                       {/* Pulse packet traveling to node */}
-                      <circle cx={x} cy={y} r="3" fill="#00e5ff" className="animate-ping" />
+                      <circle cx={x} cy={y} r="3" fill="#f43f5e" className="animate-ping" />
                     </g>
                   );
                 })}
@@ -136,18 +178,18 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
 
               {/* Central "YOU" Node */}
               <div className="relative z-20 flex flex-col items-center">
-                <span className="absolute w-16 h-16 rounded-full bg-cyan-500/20 animate-ping pointer-events-none" />
-                <div className="w-12 h-12 rounded-full bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(0,229,255,0.7)]">
+                <span className="absolute w-16 h-16 rounded-full bg-rose-500/20 animate-ping pointer-events-none" />
+                <div className="w-12 h-12 rounded-full bg-rose-500/20 border-2 border-rose-400 flex items-center justify-center text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.7)]">
                   <Shield className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-mono text-cyan-300 font-bold mt-1 tracking-widest">
+                <span className="text-[10px] font-mono text-rose-200 font-bold mt-1 tracking-widest">
                   YOU
                 </span>
               </div>
 
               {/* Orbiting Guardian Nodes */}
-              {guardians.map((g, idx) => {
-                const total = guardians.length || 1;
+              {activeContactsList.map((g, idx) => {
+                const total = activeContactsList.length || 1;
                 const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
                 const radius = 120;
                 const x = Math.cos(angle) * radius;
@@ -155,17 +197,17 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
 
                 return (
                   <motion.div
-                    key={g.id}
+                    key={g._id || g.id}
                     style={{
                       transform: `translate(${x}px, ${y}px)`
                     }}
                     className="absolute z-20 flex flex-col items-center group cursor-pointer"
                   >
-                    <div className="w-9 h-9 rounded-full bg-purple-950 border-2 border-purple-400 text-purple-200 flex items-center justify-center text-xs font-mono font-bold shadow-[0_0_15px_rgba(168,85,247,0.5)] group-hover:scale-110 transition-transform">
-                      {g.name.charAt(0)}
+                    <div className="w-9 h-9 rounded-full bg-indigo-950 border-2 border-indigo-400 text-indigo-200 flex items-center justify-center text-xs font-mono font-bold shadow-[0_0_15px_rgba(129,140,248,0.5)] group-hover:scale-110 transition-transform">
+                      {(g.name || 'G').charAt(0)}
                     </div>
-                    <span className="text-[9px] font-mono text-purple-300 bg-black/80 px-1.5 py-0.5 rounded mt-0.5 whitespace-nowrap">
-                      {g.name.split(' ')[0]}
+                    <span className="text-[9px] font-mono text-indigo-300 bg-black/80 px-1.5 py-0.5 rounded mt-0.5 whitespace-nowrap">
+                      {(g.name || 'Node').split(' ')[0]}
                     </span>
                   </motion.div>
                 );
@@ -173,22 +215,22 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
             </div>
 
             {/* Footer summary */}
-            <div className="w-full text-xs font-mono text-slate-400 flex items-center justify-between border-t border-purple-500/20 pt-3">
+            <div className="w-full text-xs font-mono text-slate-400 flex items-center justify-between border-t border-indigo-500/20 pt-3">
               <span>ACTIVE MESH PROTOCOL</span>
               <span className="text-emerald-400">100% REACHABLE</span>
             </div>
           </GlassCard>
 
           {/* Broadcast Message Preview Card */}
-          <GlassCard variant="cyan" className="w-full p-6 mt-6">
-            <div className="flex items-center justify-between mb-3 border-b border-cyan-500/20 pb-2">
+          <GlassCard variant="rose" className="w-full p-6 mt-6">
+            <div className="flex items-center justify-between mb-3 border-b border-rose-500/20 pb-2">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-cyan-400" />
+                <MessageSquare className="w-4 h-4 text-rose-400" />
                 <span className="font-tactical font-bold text-sm text-white">
                   AUTOMATED SOS BROADCAST TEMPLATE
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-cyan-400">SMS / WHATSAPP</span>
+              <span className="text-[10px] font-mono text-rose-400">SMS / WHATSAPP</span>
             </div>
             <pre className="text-[11px] font-mono text-slate-300 bg-black/50 p-3 rounded-lg whitespace-pre-wrap border border-white/5 leading-relaxed">
               {broadcastSmsPreview}
@@ -200,21 +242,21 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
         <div className="lg:col-span-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase tracking-widest text-slate-400">
-              REGISTERED EMERGENCY GUARDIANS ({guardians.length})
+              REGISTERED EMERGENCY GUARDIANS ({activeContactsList.length})
             </span>
           </div>
 
           <div className="space-y-3">
-            {guardians.map((guardian) => (
+            {activeContactsList.map((guardian) => (
               <GlassCard
-                key={guardian.id}
+                key={guardian._id || guardian.id}
                 variant="violet"
                 className="p-5 flex flex-col gap-3 relative"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center font-tactical font-bold text-lg text-purple-300">
-                      {guardian.name.charAt(0)}
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center font-tactical font-bold text-lg text-indigo-300">
+                      {(guardian.name || 'G').charAt(0)}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -228,13 +270,13 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                         )}
                       </div>
                       <span className="text-xs font-mono text-slate-400">
-                        {guardian.relation} • {guardian.phone}
+                        {guardian.relationship || guardian.relation} • {guardian.phone}
                       </span>
                     </div>
                   </div>
 
                   <button
-                    onClick={() => removeGuardian(guardian.id)}
+                    onClick={() => removeGuardian(guardian._id || guardian.id)}
                     title="Remove Guardian"
                     className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
                   >
@@ -246,15 +288,15 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                 <div className="grid grid-cols-3 gap-2 py-2 border-y border-white/5 text-[11px] font-mono text-slate-300">
                   <div className="flex items-center gap-1.5">
                     <Battery className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{guardian.battery}%</span>
+                    <span>{guardian.battery || 90}%</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Radio className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{guardian.latency}</span>
+                    <Radio className="w-3.5 h-3.5 text-rose-400" />
+                    <span>{guardian.latency || '18ms'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{guardian.lastPing}</span>
+                    <span>{guardian.lastPing || 'Just now'}</span>
                   </div>
                 </div>
 
@@ -262,16 +304,16 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
-                    {guardian.status}
+                    {guardian.status || 'REACHABLE'}
                   </span>
 
                   <TacticalButton
                     size="sm"
-                    variant={pingSuccessId === guardian.id ? "safe" : "outline"}
+                    variant={pingSuccessId === (guardian._id || guardian.id) ? "safe" : "outline"}
                     icon={Send}
-                    onClick={() => handlePing(guardian.id)}
+                    onClick={() => handlePing(guardian._id || guardian.id)}
                   >
-                    {pingSuccessId === guardian.id ? "PONG (14ms OK)" : "PING HEARTBEAT"}
+                    {pingSuccessId === (guardian._id || guardian.id) ? "PONG (14ms OK)" : "PING HEARTBEAT"}
                   </TacticalButton>
                 </div>
               </GlassCard>
@@ -290,10 +332,10 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-md"
             >
-              <GlassCard variant="cyan" className="p-6">
-                <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4">
+              <GlassCard variant="rose" className="p-6">
+                <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4">
                   <div className="flex items-center gap-2">
-                    <UserPlus className="w-5 h-5 text-cyan-400" />
+                    <UserPlus className="w-5 h-5 text-rose-400" />
                     <h3 className="font-tactical font-bold text-xl text-white">
                       ENROLL NEW GUARDIAN
                     </h3>
@@ -319,7 +361,7 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                       onChange={(e) =>
                         setNewGuardian({ ...newGuardian, name: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white font-mono text-sm focus:outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-rose-500/30 text-white font-mono text-sm focus:outline-none focus:border-rose-400"
                     />
                   </div>
 
@@ -334,7 +376,7 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                       onChange={(e) =>
                         setNewGuardian({ ...newGuardian, relation: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white font-mono text-sm focus:outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-rose-500/30 text-white font-mono text-sm focus:outline-none focus:border-rose-400"
                     />
                   </div>
 
@@ -350,7 +392,7 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                       onChange={(e) =>
                         setNewGuardian({ ...newGuardian, phone: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-cyan-500/30 text-white font-mono text-sm focus:outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-lg bg-black/50 border border-rose-500/30 text-white font-mono text-sm focus:outline-none focus:border-rose-400"
                     />
                   </div>
 
@@ -362,7 +404,7 @@ Battery: 94% | Accuracy: ±${telemetry.accuracy}m`;
                     >
                       CANCEL
                     </TacticalButton>
-                    <TacticalButton type="submit" variant="cyan">
+                    <TacticalButton type="submit" variant="rose">
                       LINK NODE TO MESH
                     </TacticalButton>
                   </div>

@@ -11,7 +11,11 @@ import {
   Cpu,
   Smartphone,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  User,
+  LogOut,
+  Mail,
+  ShieldCheck
 } from 'lucide-react';
 import { useSecurity } from '../context/SecurityContext';
 import { tacticalAudio } from '../services/audioService';
@@ -21,10 +25,20 @@ import TelemetryText from '../components/common/TelemetryText';
 import StatusBadge from '../components/common/StatusBadge';
 
 export default function SettingsPage() {
-  const { soundEnabled, toggleSound, setStealthMode } = useSecurity();
+  const {
+    currentUser,
+    logoutUser,
+    setActiveTab,
+    soundEnabled,
+    toggleSound,
+    setStealthMode,
+    shakeEnabled,
+    shakeSupported,
+    toggleShake
+  } = useSecurity();
 
+  const [shakeError, setShakeError] = useState('');
   const [autoRecordAudio, setAutoRecordAudio] = useState(true);
-  const [shakeToTrigger, setShakeToTrigger] = useState(true);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [lowPower3d, setLowPower3d] = useState(false);
   const [disarmPin, setDisarmPin] = useState('1234');
@@ -61,13 +75,20 @@ export default function SettingsPage() {
     }
   ];
 
+  const handleLogout = () => {
+    tacticalAudio.playClick();
+    if (window.confirm("Confirm sign out: End your active guardian session?")) {
+      logoutUser();
+    }
+  };
+
   return (
     <div className="relative min-h-screen pb-28 pt-4 px-4 max-w-6xl mx-auto flex flex-col gap-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rose-500/20 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-cyan-400" />
+            <Settings className="w-5 h-5 text-rose-400" />
             <h1 className="font-tactical font-bold text-3xl md:text-4xl text-white tracking-wider">
               TACTICAL CONFIGURATION & PERMISSIONS
             </h1>
@@ -80,14 +101,59 @@ export default function SettingsPage() {
         <StatusBadge label="DIAGNOSTICS PASSED" status="safe" />
       </div>
 
+      {/* Account & Profile Card */}
+      <GlassCard variant="rose" className="p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.3)]">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-tactical font-bold text-lg text-white">
+                  {currentUser ? currentUser.name || 'Verified Guardian' : 'Guest Guardian (Unauthenticated)'}
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 font-bold">
+                  {currentUser ? 'VERIFIED' : 'GUEST'}
+                </span>
+              </div>
+              <p className="text-xs font-mono text-slate-400 flex items-center gap-1.5 mt-0.5">
+                <Mail className="w-3.5 h-3.5 text-rose-400" />
+                {currentUser ? currentUser.email : 'No user logged in'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {currentUser ? (
+              <button
+                onClick={handleLogout}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-rose-600/20 border border-rose-500/50 text-rose-300 hover:bg-rose-600 hover:text-white transition-all text-xs font-tactical font-bold uppercase tracking-wider cursor-pointer shadow-[0_0_15px_rgba(244,63,94,0.3)]"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>SIGN OUT / LOGOUT</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setActiveTab('account')}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition-all text-xs font-tactical font-bold uppercase tracking-wider cursor-pointer shadow-[0_0_15px_rgba(244,63,94,0.4)]"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>AUTHENTICATE NOW</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </GlassCard>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Tactical Toggles & Hardware Diagnostic */}
         <div className="lg:col-span-7 flex flex-col gap-6">
           {/* Hardware Permissions Cards */}
-          <GlassCard variant="cyan" className="p-6">
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4">
+          <GlassCard variant="rose" className="p-6">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-cyan-400" />
+                <Cpu className="w-4 h-4 text-rose-400" />
                 <span className="font-tactical font-bold text-lg text-white">
                   HARDWARE & SENSOR DIAGNOSTICS
                 </span>
@@ -104,7 +170,7 @@ export default function SettingsPage() {
                     className="p-3.5 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                      <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/30">
                         <Icon className="w-4 h-4" />
                       </div>
                       <div>
@@ -128,7 +194,7 @@ export default function SettingsPage() {
           </GlassCard>
 
           {/* Micro-Interaction Toggles */}
-          <GlassCard variant="cyan" className="p-6">
+          <GlassCard variant="rose" className="p-6">
             <span className="text-xs font-mono uppercase tracking-widest text-slate-400 block mb-4">
               TACTICAL SYSTEM AUTOMATION
             </span>
@@ -149,7 +215,7 @@ export default function SettingsPage() {
                     setAutoRecordAudio(!autoRecordAudio);
                   }}
                   className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                    autoRecordAudio ? 'bg-cyan-500 shadow-[0_0_10px_#00e5ff]' : 'bg-slate-700'
+                    autoRecordAudio ? 'bg-rose-500 shadow-[0_0_10px_#f43f5e]' : 'bg-slate-700'
                   }`}
                 >
                   <span
@@ -166,21 +232,26 @@ export default function SettingsPage() {
                     Shake-To-Trigger Accelerometer Sensor
                   </h4>
                   <p className="text-[11px] font-mono text-slate-400">
-                    Arms emergency protocol when device experiences high G-force shake.
+                    Shake the phone 3 times to send an SOS (5s cancel window).
+                    {!shakeSupported && ' Not supported on this device.'}
                   </p>
+                  {shakeError && (
+                    <p className="text-[11px] font-mono text-rose-400 mt-1">{shakeError}</p>
+                  )}
                 </div>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     tacticalAudio.playClick();
-                    setShakeToTrigger(!shakeToTrigger);
+                    const res = await toggleShake();
+                    setShakeError(res.ok ? '' : res.error);
                   }}
                   className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                    shakeToTrigger ? 'bg-cyan-500 shadow-[0_0_10px_#00e5ff]' : 'bg-slate-700'
+                    shakeEnabled ? 'bg-rose-500 shadow-[0_0_10px_#f43f5e]' : 'bg-slate-700'
                   }`}
                 >
                   <span
                     className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                      shakeToTrigger ? 'translate-x-6' : 'translate-x-0'
+                      shakeEnabled ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
                 </button>
@@ -198,7 +269,7 @@ export default function SettingsPage() {
                 <button
                   onClick={toggleSound}
                   className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                    soundEnabled ? 'bg-cyan-500 shadow-[0_0_10px_#00e5ff]' : 'bg-slate-700'
+                    soundEnabled ? 'bg-rose-500 shadow-[0_0_10px_#f43f5e]' : 'bg-slate-700'
                   }`}
                 >
                   <span
@@ -269,7 +340,7 @@ export default function SettingsPage() {
               Activate the covert calculator disguise immediately. To uncloak later, enter <strong>1091=</strong> or <strong>1234=</strong>.
             </p>
             <TacticalButton
-              variant="cyan"
+              variant="safe"
               className="w-full"
               onClick={() => {
                 tacticalAudio.playClick();

@@ -12,7 +12,8 @@ import {
   PhoneCall,
   Activity,
   Send,
-  Battery
+  Battery,
+  Smartphone
 } from 'lucide-react';
 import { useSecurity } from '../context/SecurityContext';
 import { tacticalAudio } from '../services/audioService';
@@ -28,7 +29,11 @@ export default function PanicHubPage() {
     disarmSos,
     telemetry,
     guardians,
-    logEvent
+    logEvent,
+    recentShakeCount,
+    shakeStatusMessage,
+    simulateShake,
+    simulateFullShakeSequence
   } = useSecurity();
 
   const isArmed = armedState === 'ARMED';
@@ -135,10 +140,10 @@ export default function PanicHubPage() {
   return (
     <div className="relative min-h-screen pb-28 pt-4 px-4 max-w-6xl mx-auto flex flex-col gap-8">
       {/* Header telemetry ribbon */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rose-500/20 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <ShieldAlert className={`w-5 h-5 ${isArmed ? 'text-rose-500 animate-bounce' : 'text-cyan-400'}`} />
+            <ShieldAlert className={`w-5 h-5 ${isArmed ? 'text-rose-500 animate-bounce' : 'text-rose-400'}`} />
             <h1 className="font-tactical font-bold text-3xl md:text-4xl text-white tracking-wider">
               TACTICAL SOS MISSION CENTER
             </h1>
@@ -165,7 +170,7 @@ export default function PanicHubPage() {
         {/* Left Column: Big SOS Action Terminal */}
         <div className="lg:col-span-7 flex flex-col items-center justify-center">
           <GlassCard
-            variant={isArmed ? 'danger' : 'cyan'}
+            variant={isArmed ? 'danger' : 'rose'}
             className="w-full p-8 flex flex-col items-center justify-center relative overflow-hidden"
           >
             {/* Background warning strobes when armed */}
@@ -186,13 +191,13 @@ export default function PanicHubPage() {
                     isArmed
                       ? 'border-rose-500/60 animate-ping'
                       : isHolding
-                      ? 'border-cyan-400/80 animate-pulse'
-                      : 'border-cyan-500/20'
+                      ? 'border-rose-400/80 animate-pulse'
+                      : 'border-rose-500/20'
                   }`}
                 />
                 <div
                   className={`absolute -inset-16 rounded-full border border-dashed transition-all duration-300 pointer-events-none ${
-                    isArmed ? 'border-rose-500/40 animate-spin' : 'border-cyan-500/10'
+                    isArmed ? 'border-rose-500/40 animate-spin' : 'border-rose-500/10'
                   }`}
                   style={{ animationDuration: '10s' }}
                 />
@@ -212,7 +217,7 @@ export default function PanicHubPage() {
                     cy="116"
                     r="104"
                     fill="none"
-                    stroke={isArmed ? '#ff1744' : '#00e5ff'}
+                    stroke={isArmed ? '#ff1744' : '#f43f5e'}
                     strokeWidth="8"
                     strokeDasharray={2 * Math.PI * 104}
                     strokeDashoffset={2 * Math.PI * 104 * (1 - holdProgress)}
@@ -233,7 +238,7 @@ export default function PanicHubPage() {
                     isArmed
                       ? 'bg-gradient-to-b from-rose-600 to-rose-900 border-4 border-white text-white shadow-[0_0_60px_rgba(255,23,68,0.9)]'
                       : isHolding
-                      ? 'scale-95 bg-gradient-to-b from-cyan-500 to-blue-700 text-white shadow-[0_0_45px_rgba(0,229,255,0.7)]'
+                      ? 'scale-95 bg-gradient-to-b from-rose-500 to-rose-700 text-white shadow-[0_0_45px_rgba(244,63,94,0.7)]'
                       : 'bg-gradient-to-b from-rose-600/90 to-rose-950 border-4 border-rose-500/60 text-white hover:border-rose-400 shadow-[0_0_35px_rgba(255,23,68,0.4)] active:scale-95'
                   }`}
                 >
@@ -298,6 +303,73 @@ export default function PanicHubPage() {
                     />
                   ))}
                 </div>
+              </div>
+            )}
+          </GlassCard>
+
+          {/* 3X SHAKE-TO-SOS SENSOR CARD */}
+          <GlassCard variant="rose" className="p-5 mt-4">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl bg-rose-500/15 border border-rose-400/40 text-rose-300 ${recentShakeCount > 0 ? 'animate-phone-shake' : ''}`}>
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-tactical font-bold text-base text-white tracking-wide">
+                    SHAKE DEVICE (3X) TO ACTIVATE SOS
+                  </h4>
+                  <p className="text-[11px] font-sans text-rose-200/80">
+                    Vigorously shake your phone 3 times in an emergency to trigger instant alarm and police dispatch.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30 shrink-0">
+                SENSOR ACTIVE
+              </span>
+            </div>
+
+            {/* Live 3-Stage Shake Meter */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-black/40 border border-white/5">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono text-slate-300">SHAKE METER:</span>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3].map((step) => (
+                    <div
+                      key={step}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center font-tactical font-bold text-sm transition-all duration-200 border-2 ${
+                        recentShakeCount >= step
+                          ? 'bg-rose-600 border-rose-300 text-white shadow-[0_0_15px_rgba(244,63,94,0.8)] scale-110'
+                          : 'bg-white/5 border-slate-700 text-slate-500'
+                      }`}
+                    >
+                      {recentShakeCount >= step ? '✓' : step}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Test / Simulation Buttons for Desktop / Demos */}
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  onClick={() => simulateShake()}
+                  title="Simulate 1 shake"
+                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-400/50 text-xs font-mono text-slate-200 transition-colors cursor-pointer"
+                >
+                  +1 Shake
+                </button>
+                <button
+                  onClick={() => simulateFullShakeSequence()}
+                  title="Simulate full 3-shake SOS sequence"
+                  className="px-3.5 py-1.5 rounded-lg bg-rose-600/30 hover:bg-rose-600 border border-rose-400 text-xs font-mono font-bold text-rose-200 hover:text-white transition-all shadow-[0_0_15px_rgba(244,63,94,0.3)] cursor-pointer"
+                >
+                  ⚡ Test 3x Shake
+                </button>
+              </div>
+            </div>
+
+            {shakeStatusMessage && (
+              <div className="mt-3 text-xs font-mono text-center text-rose-300 font-semibold animate-pulse">
+                {shakeStatusMessage}
               </div>
             )}
           </GlassCard>
@@ -371,10 +443,10 @@ export default function PanicHubPage() {
             </GlassCard>
           ) : (
             /* Standing By: Live Location & Dispatch Readiness Card */
-            <GlassCard variant="cyan" className="p-6 flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+            <GlassCard variant="rose" className="p-6 flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-rose-500/20 pb-3">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-cyan-400 animate-pulse" />
+                  <MapPin className="w-4 h-4 text-rose-400 animate-pulse" />
                   <span className="font-tactical font-bold text-lg text-white">
                     LIVE LOCATION TELEMETRY
                   </span>
@@ -409,7 +481,7 @@ export default function PanicHubPage() {
               </div>
 
               <div className="p-3 rounded-lg bg-black/40 border border-white/5 flex items-start gap-2 text-xs font-mono text-slate-300">
-                <Radio className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                <Radio className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <div>
                   <span className="text-slate-400 block text-[10px]">ADDRESS SECTOR:</span>
                   <span>{telemetry.address}</span>
@@ -422,7 +494,7 @@ export default function PanicHubPage() {
           <GlassCard variant={isArmed ? 'danger' : 'safe'} className="p-6">
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-cyan-400" />
+                <Activity className="w-4 h-4 text-rose-400" />
                 <span className="font-tactical font-bold text-base text-white">
                   AUTOMATED DISPATCH ARRAY
                 </span>
@@ -467,7 +539,7 @@ export default function PanicHubPage() {
 
               <div className="flex items-center justify-between p-2 rounded bg-white/5 border border-white/5">
                 <div className="flex items-center gap-2">
-                  <Send className="w-3.5 h-3.5 text-cyan-400" />
+                  <Send className="w-3.5 h-3.5 text-indigo-400" />
                   <span className="text-slate-200">Guardian SMS Relay:</span>
                 </div>
                 <span

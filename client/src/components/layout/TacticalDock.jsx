@@ -39,7 +39,7 @@ export default function TacticalDock() {
   };
 
   return (
-    <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-2xl px-2 py-2 rounded-2xl bg-[#0b0f19]/90 backdrop-blur-2xl border border-cyan-500/25 shadow-[0_10px_35px_rgba(0,0,0,0.7)] flex items-center justify-between transition-all">
+    <nav className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-2xl px-2 py-2 rounded-2xl bg-[#121320]/90 backdrop-blur-2xl border border-rose-500/20 shadow-[0_10px_35px_rgba(0,0,0,0.6)] flex items-center justify-between transition-all">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
@@ -63,10 +63,10 @@ export default function TacticalDock() {
               <div
                 className={`relative w-13 h-13 rounded-full flex items-center justify-center border-2 transition-transform duration-200 group-hover:scale-105 group-active:scale-95 shadow-xl ${
                   isArmed
-                    ? 'bg-rose-600 border-white text-white shadow-[0_0_25px_rgba(255,23,68,0.9)] animate-bounce'
+                    ? 'bg-rose-600 border-white text-white shadow-[0_0_25px_rgba(244,63,94,0.9)] animate-bounce'
                     : isActive
-                    ? 'bg-rose-600 border-rose-400 text-white shadow-[0_0_20px_rgba(255,23,68,0.6)]'
-                    : 'bg-rose-950/80 border-rose-500 text-rose-300 shadow-[0_0_15px_rgba(255,23,68,0.3)]'
+                    ? 'bg-rose-600 border-rose-400 text-white shadow-[0_0_20px_rgba(244,63,94,0.6)]'
+                    : 'bg-rose-950/80 border-rose-500 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.3)]'
                 }`}
               >
                 <Icon className="w-6 h-6" />
@@ -88,14 +88,14 @@ export default function TacticalDock() {
             onClick={() => handleSelect(item.id)}
             className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition-all duration-150 cursor-pointer ${
               isActive
-                ? 'text-cyan-300 bg-cyan-500/15 border border-cyan-400/30 shadow-[0_0_10px_rgba(0,229,255,0.2)]'
+                ? 'text-rose-300 bg-rose-500/15 border border-rose-400/30 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
             }`}
           >
-            <Icon className={`w-4 h-4 md:w-5 md:h-5 ${isActive ? 'text-cyan-300' : ''}`} />
+            <Icon className={`w-4 h-4 md:w-5 md:h-5 ${isActive ? 'text-rose-300' : ''}`} />
             <span
               className={`text-[9px] md:text-[10px] font-mono tracking-tight mt-0.5 ${
-                isActive ? 'font-semibold text-cyan-300' : 'text-slate-400'
+                isActive ? 'font-semibold text-rose-300' : 'text-slate-400'
               }`}
             >
               {item.label}

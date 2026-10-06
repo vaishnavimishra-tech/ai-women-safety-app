@@ -5,7 +5,7 @@ import { tacticalAudio } from '../../services/audioService';
 export default function TacticalButton({
   children,
   onClick,
-  variant = "cyan", // 'cyan' | 'danger' | 'safe' | 'outline' | 'ghost'
+  variant = "rose", // 'rose' | 'cyan' | 'danger' | 'safe' | 'outline' | 'ghost'
   size = "md", // 'sm' | 'md' | 'lg'
   icon: Icon,
   disabled = false,
@@ -27,12 +27,13 @@ export default function TacticalButton({
   }[size];
 
   const variantClasses = {
-    cyan: "bg-cyan-500/15 border border-cyan-400/50 text-cyan-300 hover:bg-cyan-500/30 hover:border-cyan-300 shadow-[0_0_15px_rgba(0,229,255,0.2)] hover:shadow-[0_0_25px_rgba(0,229,255,0.5)] active:shadow-[0_0_35px_rgba(0,229,255,0.7)]",
-    danger: "bg-rose-600/20 border border-rose-500/70 text-rose-300 hover:bg-rose-600/40 hover:border-rose-400 shadow-[0_0_20px_rgba(255,23,68,0.3)] hover:shadow-[0_0_35px_rgba(255,23,68,0.6)] active:shadow-[0_0_45px_rgba(255,23,68,0.8)]",
-    safe: "bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 hover:bg-emerald-500/35 hover:border-emerald-300 shadow-[0_0_15px_rgba(0,230,118,0.25)] hover:shadow-[0_0_25px_rgba(0,230,118,0.5)]",
-    outline: "bg-transparent border border-slate-700 text-slate-300 hover:border-cyan-400/60 hover:text-cyan-300 hover:shadow-[0_0_15px_rgba(0,229,255,0.25)]",
+    rose: "bg-rose-500/15 border border-rose-400/50 text-rose-200 hover:bg-rose-500/30 hover:border-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_25px_rgba(244,63,94,0.5)] active:shadow-[0_0_35px_rgba(244,63,94,0.7)]",
+    cyan: "bg-rose-500/15 border border-rose-400/50 text-rose-200 hover:bg-rose-500/30 hover:border-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:shadow-[0_0_25px_rgba(244,63,94,0.5)]",
+    danger: "bg-rose-600/20 border border-rose-500/70 text-rose-300 hover:bg-rose-600/40 hover:border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.35)] hover:shadow-[0_0_35px_rgba(244,63,94,0.6)] active:shadow-[0_0_45px_rgba(244,63,94,0.8)]",
+    safe: "bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 hover:bg-emerald-500/35 hover:border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)]",
+    outline: "bg-transparent border border-slate-700 text-slate-300 hover:border-rose-400/60 hover:text-rose-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.25)]",
     ghost: "bg-transparent text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
-  }[variant];
+  }[variant] || "bg-rose-500/15 border border-rose-400/50 text-rose-200";
 
   return (
     <motion.button
