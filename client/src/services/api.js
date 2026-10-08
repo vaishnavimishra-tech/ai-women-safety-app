@@ -1,5 +1,4 @@
-// Backend URL. Override with VITE_API_URL in client/.env for deployment.
-export const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
+export const API_URL = import.meta.env.VITE_API_URL || "";
 
 export const signupUser = async (userData) => {
   const response = await fetch(`${API_URL}/signup`, {
